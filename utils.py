@@ -175,7 +175,7 @@ def inspect_annotations(img:np.array, lit_pixels:list, shadow_pixels:list) -> No
 
 
 #####################################################################################################################
-def convert_img_to_log_space(img: np.array, epsilon=1e-10, norming=False) -> np.array:
+def convert_img_to_log_space(img: np.array, norming=False) -> np.array:
     """
     Converts a 16-bit linear image to log space, setting linear 0 values to 0 in log space.
 
@@ -194,7 +194,7 @@ def convert_img_to_log_space(img: np.array, epsilon=1e-10, norming=False) -> np.
     zero_mask = (img == 0)
 
     # Apply the log transformation
-    log_img = np.log(img + epsilon)  
+    log_img = np.log(img)  
 
     # Set log-transformed values to 0 where the original pixels were 0
     log_img[zero_mask] = 0
