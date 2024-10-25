@@ -19,6 +19,7 @@ import argparse
 from utils import *
 
 # Constants
+epsilon = 1e-10
 anchor_point = 10.8
 
 def find_csv_file(data_folder: Path) -> Path:

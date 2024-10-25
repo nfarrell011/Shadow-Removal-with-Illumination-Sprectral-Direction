@@ -55,6 +55,7 @@ def display_image(img:np.array, title:str) -> None:
     --------
     None
     """
+   
     img_8bit = convert_16bit_to_8bit(img)
     plt.imshow(img_8bit)
     plt.title(title)
@@ -87,6 +88,7 @@ def convert_img_to_rg_chromaticity(img: np.array, epsilon: float = 1e-10, rg_onl
     in each pixel relative to the total pixel intensity. The blue channel is 
     set to zero to highlight the r and g components.
     """
+
     # Ensure floating-point precision
     img = img.astype(np.float32)
     
@@ -134,6 +136,8 @@ def get_lit_shadow_pixel_coordinates(annotations_df:pd.DataFrame, image_file_nam
     ]
     return lit_pixels, shadow_pixels
 
+
+
 #####################################################################################################################
 def inspect_annotations(img:np.array, lit_pixels:list, shadow_pixels:list) -> None:
     """  
@@ -168,6 +172,8 @@ def inspect_annotations(img:np.array, lit_pixels:list, shadow_pixels:list) -> No
     plt.axis('off')
     plt.show()
 
+
+
 #####################################################################################################################
 def convert_img_to_log_space(img: np.array, norming=False) -> np.array:
     """
@@ -183,6 +189,7 @@ def convert_img_to_log_space(img: np.array, norming=False) -> np.array:
     log_img : np.array
         Log-transformed image with 0 values preserved.
     """
+
     # Prepare a mask to keep zero-valued pixels unchanged
     zero_mask = (img == 0)
 
@@ -215,7 +222,9 @@ def log_to_linear(log_rgb: np.array) -> np.array:
     vis_img : np.array
         Visualization-ready 8-bit image.
     """
+
     linear_img = np.exp(log_rgb)
+
 
     return linear_img
 
@@ -321,7 +330,7 @@ def compute_isd(log_rgb: np.array, lit_pixels: list, shadow_pixels: list) -> np.
 
     # Get pixel diffs
     pixel_diff = lit_values  - shadow_values
-    #isd = pixel_diff / np.linalg.norm(pixel_diff)
+    isd = pixel_diff / np.linalg.norm(pixel_diff)
 
     # Use equation #4 from Bruce's RoadVision Paper
     mean_diff = np.mean(pixel_diff, axis=0)
