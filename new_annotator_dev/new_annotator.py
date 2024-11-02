@@ -153,12 +153,12 @@ class AnnotationManager:
 
                     self.reset()
                     cv2.imshow('image', self.img)
-                    self.process_image(self.img)
                     self.show_message()  # Show initial message
 
                     while True:
                         cv2.imshow('image', self.img)
                         cv2.setMouseCallback('image', self.click_event)
+                        self.process_image(self.img)
 
                         key = cv2.waitKey(0)
 
