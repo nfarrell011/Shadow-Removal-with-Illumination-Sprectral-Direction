@@ -21,6 +21,7 @@ build/
 
 # Data folder
 data/*
+/new_annotator_dev/test_images/*
 
 # Jupyter Notebooks
 .ipynb_checkpoints/

@@ -17,6 +17,7 @@ class AnnotationManager:
     def add_click(self, row, col):
         """Add a click (light or shadow) based on the click count."""
         if self.click_count % 2 == 0:
+            
             # Add a new lit point
             self.clicks.append((row, col, None, None))  # Placeholder for shadow
         else:
