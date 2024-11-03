@@ -7,6 +7,8 @@ import csv
 import shutil
 from pathlib import Path
 
+from new_process_image_class import LogChromaticity
+
 # Class to manage the annotation state for each image
 class AnnotationManager:
     """ 
@@ -29,6 +31,7 @@ class AnnotationManager:
 
         # Image of interest
         self.img = None
+        self.image_path = None # Used to read a UNCHANAGED version for processing
 
     def set_directories(self, processed_folder, image_error_folder, bad_image_folder):
         """
@@ -110,6 +113,14 @@ class AnnotationManager:
         except Exception as e:
             print(f"Error moving image {image_path}: {e}")
 
+
+    def process_image(self) -> None:
+        """
+        """
+        img_processor = LogChromaticity()
+        img_processor.process_img(self.image_path, self.clicks)
+        return None
+    
     # Mouse event callback function
     def click_event(self, event, x, y, flags, params):
         """
@@ -119,7 +130,7 @@ class AnnotationManager:
             self.add_click(row, col)
 
             # Alternate between two colors for the circles ~ Green for light, Red for shadow
-            color = (0, 255, 0) if self.click_count % 2 == 0 else (0, 0, 255)
+            color = (0, 0, 255) if self.click_count % 2 == 0 else (0, 255, 0)
             cv2.circle(self.img, (x, y), 5, color, 1)
 
             # Draw a line between every pair of clicks
@@ -128,54 +139,58 @@ class AnnotationManager:
                          (self.clicks[-1][3], self.clicks[-1][2]), (255, 255, 255), 1)
 
             cv2.imshow('image', self.img)
+
+            # Process image after every pair of click have been made
+            if self.click_count >= 2 and self.click_count % 2 == 0:
+                print("Entering process image!")
+                self.process_image()
+
             self.show_message()
 
-    def process_image(self):
-        """
-        """
-        cv2.imshow("Processed Image", self.img)
 
-        # Main annotation loop
     def annotate_images(self):
         """ 
         """
         for image_name in os.listdir(self.image_folder):
             if image_name.endswith(('tif', 'tiff')):
-                image_path = os.path.join(self.image_folder, image_name)
+                self.image_path = os.path.join(self.image_folder, image_name)
 
                 try:
-                    self.img = cv2.imread(image_path)
+                    self.img = cv2.imread(self.image_path)
 
                     if self.img is None:
                         print(f"Cannot open image: {image_name}. Moving to wrong folder.")
-                        self.move_image(image_path, self.image_error_folder)
+                        self.move_image(self.image_path, self.image_error_folder)
                         continue
 
                     self.reset()
                     cv2.imshow('image', self.img)
+                    cv2.resizeWindow("image", 600, 600)
                     self.show_message()  # Show initial message
 
                     while True:
                         cv2.imshow('image', self.img)
+                        cv2.resizeWindow("image", 600, 600)
                         cv2.setMouseCallback('image', self.click_event)
-                        self.process_image(self.img)
 
                         key = cv2.waitKey(0)
 
                         if key == ord('k') and self.is_complete():  # Changed key to 'c'
                             self.write_to_csv(image_name)
-                            self.move_image(image_path, self.processed_folder)
+                            self.move_image(self.image_path, self.processed_folder)
                             break  # Move to the next image
                         
                         elif key == ord('d'):
                             print(f"Dropping {image_name}. Bad Quality.")
-                            self.move_image(image_path, self.bad_image_folder)
+                            self.move_image(self.image_path, self.bad_image_folder)
+                            break
 
                         elif key == ord('r'):
                             print(f"Starting over for {image_name}. Redo the annotations.")
-                            img = cv2.imread(image_path)  # Reload the image to clear drawn points
+                            self.img = cv2.imread(self.image_path)  # Reload the image to clear drawn points
                             self.reset()
                             cv2.imshow('image', self.img)
+                            cv2.resizeWindow("image", 600, 600)
 
                         else:
                             print("Press 'k' keep image annotations, or 'r' to redo the annotations, or 'd' to drop the image for quality reasons.\
@@ -185,7 +200,7 @@ class AnnotationManager:
 
                 except Exception as e:
                     print(f"An error occurred with image {image_name}: {e}")
-                    self.move_image(image_path, self.wrong_folder)
+                    self.move_image(self.image_path, self.image_error_folder)
 
         print("All images processed and data saved.")
 

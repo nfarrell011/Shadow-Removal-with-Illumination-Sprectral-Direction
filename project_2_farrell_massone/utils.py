@@ -210,7 +210,7 @@ def convert_img_to_log_space(img: np.array, norming=False) -> np.array:
 #####################################################################################################################
 def log_to_linear(log_rgb: np.array) -> np.array:
     """
-    COnverts log transofrmed image back to linear space in 16 bits.
+    Converts log transofrmed image back to linear space in 16 bits.
 
     Parameters:
     -----------
@@ -224,7 +224,6 @@ def log_to_linear(log_rgb: np.array) -> np.array:
     """
 
     linear_img = np.exp(log_rgb)
-
 
     return linear_img
 
