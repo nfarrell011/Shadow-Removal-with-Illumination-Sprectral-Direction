@@ -225,6 +225,54 @@ class LogChromaticity:
         # Update isd_map attribute
         self.isd_map = weighted_mean_isds
 
+    def get_annotation_weights_cv(self) -> None:
+        """
+        Computes a weight for each annotation for each pixel based on its distance to each pixel.
+        weight_i = dist_i / sum_dist_i^n
+        """
+        # Calculate midpoints between the lit and shadow pairs
+        midpoints = np.array([((x1 + x2) / 2, (y1 + y2) / 2) 
+                              for (x1, y1), (x2, y2) in zip(self.lit_pixels, self.shadow_pixels)])
+
+        # Get the number of annotations
+        num_isds = midpoints.shape[0]
+
+        # Get the image dims
+        height, width = self.rgb_img.shape[0], self.rgb_img.shape[1]
+
+        # Initialize weight map matrix (Height x Width x Num_ISDs)
+        annotation_weight_map = np.zeros((height, width, num_isds), dtype=np.float32)
+        
+        # Generate a distance map for each annotation to each pixel
+        for i in range(num_isds):
+
+            # Extract center point of the annotation line and round down coordinates to integer values
+            y, x = np.floor(midpoints[i][1]).astype(int), np.floor(midpoints[i][0]).astype(int)
+
+            # Initialize a binary image with all ones
+            binary_image = np.ones((height, width), dtype=np.uint8)
+            binary_image = binary_image * 255 # make image all white
+
+            # Set one pixel to black (the annotation point)
+            if 0 <= y < height and 0 <= x < width:
+                binary_image[y, x] = 0
+
+            # Perform distance transform from each pixel to the annotation center point
+            dist = cv2.distanceTransform(binary_image, cv2.DIST_L2, 0)
+
+            # Normalize the distance transform output to [0, 1]
+            dist_output = cv2.normalize(dist, None, 0, 1, cv2.NORM_MINMAX)
+
+            # Add the distances for this annotation to the annotation_map
+            annotation_weight_map[:, :, i] = dist_output
+
+            # Display the distance transform result
+            #cv2.imshow("Distance Transform", dist_output)
+
+        # Transforms distances to proportions to use as the weights
+        annotation_weight_map = annotation_weight_map / annotation_weight_map.sum(axis = 2, keepdims = True)
+        self.annotation_weight_map = annotation_weight_map
+
     ###################################################################################################################
     # Methods for using Overall Mean
     ###################################################################################################################
@@ -409,7 +457,7 @@ class LogChromaticity:
         # Using weight mean ISD
         if self.method == "weighted":
             print(f"Using weighted mean...")
-            self.get_annotation_weights()
+            self.get_annotation_weights_cv()
             self.compute_weighted_mean_isd_per_pixel()
             self.project_to_plane_locally()
             self.log_to_linear()
