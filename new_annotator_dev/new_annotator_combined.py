@@ -153,7 +153,7 @@ class AnnotationManager:
             print(f"Error moving image {image_path}: {e}")
 
 
-    def process_image(self) -> None:
+    def (self) -> None:
         """
         """
         # self.img_processor = LogChromaticity()
@@ -264,13 +264,11 @@ class AnnotationManager:
 
                     self.reset() # Sets click count to zero
                     self.display_images(clickable=True)
-                    if self.processed_img is not None:
-
-                        cv2.namedWindow("Log Space Widget")
-                        cv2.createTrackbar("Anchor Point", "Log Space Widget", 104, 111, self.update_anchor)
-                        cv2.createTrackbar("Patch Size", "Log Space Widget", 1, 31, self.update_patch)
-                        cv2.createTrackbar("ISD", "Log Space Widget", 0, 1, self.isd_method)
-                        cv2.resizeWindow("Anchor Point Adjustment", 200, 200)
+                    cv2.namedWindow("Log Space Widget")
+                    cv2.createTrackbar("Anchor Point", "Log Space Widget", 104, 111, self.update_anchor)
+                    cv2.createTrackbar("Patch Size", "Log Space Widget", 1, 31, self.update_patch)
+                    cv2.createTrackbar("ISD", "Log Space Widget", 0, 1, self.isd_method)
+                    cv2.resizeWindow("Anchor Point Adjustment", 200, 200)
 
                     print("Ensure at least 6 pairs have been selected.")
                     print("Press: \n'k' to keep image annotations \n'r' to redo the annotations \n'd' to drop the image for quality reasons. \n'q' to quit the annotator.")

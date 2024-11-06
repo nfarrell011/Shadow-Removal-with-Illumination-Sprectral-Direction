@@ -16,7 +16,7 @@ class LogChromaticity:
         self.linear_converted_log_chroma_8bit = None
 
         # Default patch size set to single pixel value
-        self.patch_size = (1, 1)
+        self.patch_size = None
 
         self.lit_pixels = None
         self.shadow_pixels = None
@@ -304,11 +304,11 @@ class LogChromaticity:
         # Update isd_map attribute
         self.isd_map = weighted_mean_isds
 
-    def project_to_plane_locally(self, anchor_point: np.array = np.array([10.8, 10.8, 10.8])) -> None:
+    def project_to_plane_locally(self) -> None:
         """
         Projects each pixel to a plane orthogonal to the ISD that is closest to that pixel. 
         """
-        shifted_log_rgb = self.log_img - anchor_point
+        shifted_log_rgb = self.log_img - self.anchor_point
         dot_product_map = np.einsum('ijk,ijk->ij', shifted_log_rgb, self.isd_map)
 
         # Reshape the dot product to (H, W, 1) for broadcasting
@@ -321,7 +321,7 @@ class LogChromaticity:
         projected_rgb = shifted_log_rgb - projection
 
         # Shift the values back by adding the anchor point
-        projected_rgb += anchor_point
+        projected_rgb += self.anchor_point
 
         self.img_chroma = projected_rgb
     
