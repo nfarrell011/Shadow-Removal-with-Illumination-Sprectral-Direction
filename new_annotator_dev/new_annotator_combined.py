@@ -153,7 +153,7 @@ class AnnotationManager:
             print(f"Error moving image {image_path}: {e}")
 
 
-    def (self) -> None:
+    def process_image(self) -> None:
         """
         """
         # self.img_processor = LogChromaticity()
