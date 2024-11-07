@@ -6,6 +6,7 @@ import os
 import csv
 import shutil
 from pathlib import Path
+import numpy as np
 
 from new_process_image_class import LogChromaticity
 
@@ -25,15 +26,17 @@ class AnnotationManager:
         self.processed_folder = None
         self.image_error_folder = None
         self.bad_image_folder = None
+        self.processed_png_folder = None
 
         # CSV file
         self.csv_file = None
 
         # Image of interest
         self.img = None
+        self.processed_image = None
         self.image_path = None # Used to read a UNCHANAGED version for processing
 
-    def set_directories(self, processed_folder, image_error_folder, bad_image_folder):
+    def set_directories(self, processed_folder, image_error_folder, bad_image_folder, processed_png_folder):
         """
         Create the target directories if they do not exist, set to attributes.  
         """
@@ -41,11 +44,13 @@ class AnnotationManager:
         os.makedirs(processed_folder, exist_ok=True)
         os.makedirs(image_error_folder, exist_ok=True)
         os.makedirs(bad_image_folder, exist_ok=True)
+        os.makedirs(processed_png_folder, exist_ok=True)
 
         # Set to object attributes
         self.processed_folder = processed_folder
         self.image_error_folder = image_error_folder
         self.bad_image_folder = bad_image_folder
+        self.processed_png_folder = processed_png_folder
         return None
     
     def set_cvs_file(self, csv_file_path) -> None:
@@ -81,7 +86,7 @@ class AnnotationManager:
         """
         Check if a minimum of 6 pairs are annotated (12 clicks minimum).
         """
-        return (self.click_count >= 12) and (self.click_count % 2 == 0)
+        return (self.click_count >= 2) and (self.click_count % 2 == 0)
 
     def show_message(self):
         """
@@ -114,12 +119,17 @@ class AnnotationManager:
             print(f"Error moving image {image_path}: {e}")
 
 
-    def process_image(self) -> None:
+    def process_image(self) -> np.ndarray:
         """
         """
-        img_processor = LogChromaticity("weighted")
-        img_processor.process_img(self.image_path, self.clicks)
-        return None
+        print("Instantiating LogChroma")
+        img_processor = LogChromaticity("other")
+
+        # Check that the image path and clicks are valid
+        print(f"Image path: {self.image_path}, Clicks: {self.clicks}")
+
+        processed_image = img_processor.process_img(self.image_path, self.clicks)
+        return processed_image
     
     # Mouse event callback function
     def click_event(self, event, x, y, flags, params):
@@ -142,8 +152,10 @@ class AnnotationManager:
 
             # Process image after every pair of click have been made
             if self.click_count >= 2 and self.click_count % 2 == 0:
-                print("Entering process image!")
-                self.process_image()
+                processed_image = self.process_image()
+                print(processed_image)
+                self.processed_image = processed_image
+
 
             self.show_message()
 
@@ -177,6 +189,8 @@ class AnnotationManager:
 
                         if key == ord('k') and self.is_complete():  # Changed key to 'c'
                             self.write_to_csv(image_name)
+                            print("Saving PNG")
+                            cv2.imwrite(self.processed_png_folder + f'/{image_name}_PROCESSED.png', self.processed_image)
                             self.move_image(self.image_path, self.processed_folder)
                             break  # Move to the next image
                         
@@ -211,13 +225,15 @@ image_folder = 'new_annotator_dev/test_images'
 processed_folder = 'new_annotator_dev/test_images/processed'
 image_error_folder = 'new_annotator_dev/test_images/image_error'
 image_drop_folder = 'new_annotator_dev/test_images/drop'
+processed_png_folder = 'new_annotator_dev/test_images/processed_pngs'
 csv_file_path = 'new_annotator_dev/test_images/test.csv'
 
 image_annotator = AnnotationManager(image_folder = image_folder)
 
 image_annotator.set_directories(processed_folder = processed_folder, 
                                 image_error_folder = image_error_folder, 
-                                bad_image_folder = image_drop_folder)
+                                bad_image_folder = image_drop_folder,
+                                processed_png_folder = processed_png_folder)
 
 image_annotator.set_cvs_file(csv_file_path = csv_file_path)
 image_annotator.annotate_images()

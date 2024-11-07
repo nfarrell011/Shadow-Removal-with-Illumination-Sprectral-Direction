@@ -323,11 +323,12 @@ class AnnotationManager:
 ##################################################################################################################################
 
 # Initialize paths
-image_folder = 'test_images'  
-processed_folder = 'test_images/processed'
-image_error_folder = 'test_images/image_error'
-image_drop_folder = 'test_images/drop'
-csv_file_path = 'test_images/test.csv'
+# Initialize paths
+image_folder = 'new_annotator_dev/test_images'  
+processed_folder = 'new_annotator_dev/test_images/processed'
+image_error_folder = 'new_annotator_dev/test_images/image_error'
+image_drop_folder = 'new_annotator_dev/test_images/drop'
+csv_file_path = 'new_annotator_dev/test_images/test.csv'
 
 image_annotator = AnnotationManager(image_folder = image_folder)
 
