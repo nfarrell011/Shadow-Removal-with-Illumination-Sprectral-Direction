@@ -16,7 +16,7 @@ from new_process_image_class_combined_v2 import LogChromaticity
 class AnnotationManager:
     """ 
     """
-    def __init__(self, image_folder):
+    def __init__(self):
         """ 
         """
         # Image click data
@@ -43,7 +43,12 @@ class AnnotationManager:
         self.processed_img = None
 
         # Processing class object
-        # self.img_processor = None
+        self.img_processor = None
+
+    def set_image_processor(self):
+        """
+        Instantiates new image processor object
+        """
         self.img_processor = LogChromaticity()
 
 
@@ -345,6 +350,7 @@ class AnnotationManager:
                 self.image_path = os.path.join(self.image_folder, image_name)
 
                 try:
+                    self.set_image_processor()
                     self.img = cv2.imread(self.image_path)
 
                     if self.img is None:
@@ -356,7 +362,7 @@ class AnnotationManager:
                     self.display_images(clickable=True)
                     cv2.namedWindow("Log Space Widget")
                     cv2.createTrackbar("Anchor Point", "Log Space Widget", 104, 111, self.update_anchor)
-                    cv2.createTrackbar("Patch Size", "Log Space Widget", 1, 31, self.update_patch)
+                    cv2.createTrackbar("Patch Size", "Log Space Widget", 1, 61, self.update_patch)
 
                     print("""Press: 
                             \n    'h' to save image HIGH quality annotations 
@@ -447,7 +453,7 @@ directories = {
 csv_file_path = 'new_annotator_dev/test_images/test.csv'
 xml_file_path = 'new_annotator_dev/test_images/annotations.xml'
 
-image_annotator = AnnotationManager(image_folder = image_folder)
+image_annotator = AnnotationManager()
 
 image_annotator.set_directories(directories)
 
