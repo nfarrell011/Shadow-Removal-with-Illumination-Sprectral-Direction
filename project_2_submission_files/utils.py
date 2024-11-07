@@ -34,7 +34,7 @@ def convert_16bit_to_8bit(img):
     img_8bit : np.array
         Output image array converted to 8-bit (dtype: np.uint8).
     """
-    img_normalized = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX)
+    img_normalized = np.clip(img / 255, 0, 255)
     img_8bit = np.uint8(img_normalized)
 
     return img_8bit
