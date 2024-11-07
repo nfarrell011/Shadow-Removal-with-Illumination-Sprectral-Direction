@@ -362,10 +362,10 @@ class LogChromaticity:
         img_8bit : np.array
             Output image array converted to 8-bit (dtype: np.uint8).
         """
-        img_normalized = cv2.normalize(self.linear_converted_log_chroma, None, 0, 255, cv2.NORM_MINMAX)
+        #img_normalized = cv2.normalize(self.linear_converted_log_chroma, None, 0, 255, cv2.NORM_MINMAX) # divide by 255, clip to 0-255, then convert to unit8
+        img_normalized = np.clip(self.linear_converted_log_chroma / 255, 0, 255)
         img_8bit = np.uint8(img_normalized)
         self.linear_converted_log_chroma_8bit = img_8bit
-        return None
     
     ###################################################################################################################
     # Methods for using GUI Controls
@@ -424,7 +424,10 @@ class LogChromaticity:
         self.convert_16bit_to_8bit()
 
         return self.linear_converted_log_chroma_8bit
-        
+    
+
+    def update_brightness(self, val):
+        """get offset from 75th"""
 
 
     

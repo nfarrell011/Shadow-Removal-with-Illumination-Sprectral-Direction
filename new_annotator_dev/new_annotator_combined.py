@@ -173,6 +173,13 @@ class AnnotationManager:
             self.processed_img = self.img_processor.update_anchor_point(val)
             self.display_images()
 
+    def update_gamme(self, val) -> None:
+        """
+        """
+        if self.img_processor is not None:
+            self.processed_img = self.img_processor.gamma(val)
+            self.display_images()         
+
     def isd_method(self, val) -> None:
         """
         """
@@ -248,7 +255,7 @@ class AnnotationManager:
 
 
     def annotate_images(self):
-        """ 
+        """
         """
         for image_name in os.listdir(self.image_folder):
             if image_name.endswith(('tif', 'tiff')):
@@ -268,6 +275,8 @@ class AnnotationManager:
                     cv2.createTrackbar("Anchor Point", "Log Space Widget", 104, 111, self.update_anchor)
                     cv2.createTrackbar("Patch Size", "Log Space Widget", 1, 31, self.update_patch)
                     cv2.createTrackbar("ISD", "Log Space Widget", 0, 1, self.isd_method)
+                    # cv2.createTrackbar("Saturation", "Log Space Widget", 1, 10, self.update_bright)
+
                     cv2.resizeWindow("Anchor Point Adjustment", 200, 200)
 
                     print("Ensure at least 6 pairs have been selected.")
