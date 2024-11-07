@@ -53,9 +53,14 @@ class LogChromaticity:
         """
         Returns ISD pixel map as numpy array.
         """
-
         return self.isd_map
     
+    def get_anchor_point(self):
+        """
+        Returns anchor point as np.array.
+        """
+        return self.anchor_point
+
     ###################################################################################################################
     # Methods for Pre Processing Images
     ###################################################################################################################
@@ -75,15 +80,8 @@ class LogChromaticity:
             Log-transformed image with 0 values preserved.
         """
 
-        # Prepare a mask to keep zero-valued pixels unchanged
-        zero_mask = (self.rgb_img == 0)
-        self.rgb_img[zero_mask] = 1
-
-        # Apply the log transformation
-        log_img = np.log(self.rgb_img)  
-
-        # Set log-transformed values to 0 where the original pixels were 0
-        log_img[zero_mask] = 0
+        log_img = np.zeros_like(self.rgb_img, dtype = np.float32)
+        log_img[self.rgb_img != 0] = np.log(self.rgb_img[self.rgb_img != 0])
 
         assert np.min(log_img) >= 0 and np.max(log_img) <= 11.1
 
@@ -171,10 +169,10 @@ class LogChromaticity:
             dist = cv2.distanceTransform(binary_image, cv2.DIST_L2, 0)
 
             # Normalize the distance transform output to [0, 1]
-            dist_output = cv2.normalize(dist, None, 0, 1, cv2.NORM_MINMAX)
+            #dist_output = cv2.normalize(dist, None, 0, 1, cv2.NORM_MINMAX)
 
             # Add the distances for this annotation to the annotation_map
-            annotation_weight_map[:, :, i] = dist_output
+            annotation_weight_map[:, :, i] = dist
 
             # Display the distance transform result
             #cv2.imshow("Distance Transform", dist_output)

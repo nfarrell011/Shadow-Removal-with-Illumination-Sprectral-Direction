@@ -142,6 +142,7 @@ class AnnotationManager:
         image_element.set("name", image_name.lower())
         image_element.set("target_directory", target_directory)
         image_element.set("patch_size", self.img_processor.get_patch_size())
+        image_element.set("anchor_point", self.img_processor.get_anchor_point())
 
         # Only add click elements if self.clicks is not empty
         if self.clicks:
@@ -202,22 +203,23 @@ class AnnotationManager:
     def display_images(self, clickable=False) -> None:
         """ 
         """
-        if self.processed_img is not None:
-            combined_image = np.hstack((self.img, self.processed_img))
-        else:
-            combined_image = np.hstack((self.img, np.zeros_like(self.img)))
+        try:
+            if self.processed_img is not None:
+                combined_image = np.hstack((self.img, self.processed_img))
+            else:
+                combined_image = np.hstack((self.img, np.zeros_like(self.img)))
 
-        window_name = "Original Image ---------------------------------------------------------------- Processed Image"
-        #cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
-        cv2.imshow(window_name, combined_image)
-        cv2.resizeWindow(window_name, 1000, 1000)
+            window_name = "Original Image ---------------------------------------------------------------- Processed Image"
+            #cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+            cv2.imshow(window_name, combined_image)
+            cv2.resizeWindow(window_name, 1000, 1000)
+            
+            if clickable:
+                cv2.setMouseCallback('Original Image ---------------------------------------------------------------- Processed Image', self.click_event)
 
-        # if self.processed_img is not None:
-        #     cv2.createTrackbar("Anchor Point", "Original Image -- Processed Image", 0, 111, self.update_anchor)
+        except Exception as e:
+                    print(f"Error with self.display_images(): {e}")
         
-        if clickable:
-            cv2.setMouseCallback('Original Image ---------------------------------------------------------------- Processed Image', self.click_event)
-
     def reset(self) -> None:
         """
         Reset the annotation state for the current image.
@@ -331,6 +333,8 @@ class AnnotationManager:
         self.write_to_xml(image_name=image_name, target_directory=loc)
         self.move_image(self.image_path, loc)
         self.save_pixel_map(image_name)
+        self.processed_img = None
+
 
 
     def annotate_images(self):
