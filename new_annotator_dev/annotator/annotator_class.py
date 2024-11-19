@@ -18,6 +18,8 @@ import shutil
 import numpy as np
 from pathlib import Path
 import xml.etree.ElementTree as ET
+import xml.dom.minidom
+
 
 # Modules
 from image_processor_class import LogChromaticity
@@ -140,49 +142,62 @@ class AnnotationManager:
             row = [image_name.lower()] + [item for pair in self.clicks for item in pair]
             writer.writerow(row)
 
-    def write_to_xml(self, image_name, target_directory) -> None:
-        """ 
-        Writes image name, target directory, and annotations to an XML file.
-        If no annotations (clicks) are present, only the image and target directory are saved.
+    @staticmethod
+    def prettify_element(element):
+        """Return a prettified XML string for a single element."""
+        raw_str = ET.tostring(element, encoding="unicode")
+        parsed = xml.dom.minidom.parseString(raw_str)
+        return parsed.toprettyxml(indent="  ").strip()
 
-        Parameters:
-            image_name (str): Current image filename.
-            target_directory (str): Directory where the image is saved.
+    def write_to_xml(self, image_name, target_directory):
         """
-        # Check if image name and target directory are provided
+        Writes image name, target directory, and annotations to a valid XML file.
+        Ensures a single root element for the XML file.
+        """
         if not image_name or not target_directory:
             print("Error: image_name or target_directory is empty.")
             return
 
-        # Create the root element
-        root = ET.Element("annotations")
-        
-        # Add image element with attributes for name and target directory
-        image_element = ET.SubElement(root, "image")
-        image_element.set("name", image_name.lower())
-        image_element.set("target_directory", target_directory)
-        image_element.set("patch_size", self.img_processor.get_patch_size())
-        image_element.set("anchor_point", self.img_processor.get_anchor_point())
+        try:
+            # File exists: Load existing XML, else create a new root
+            if os.path.exists(self.xml_file):
+                tree = ET.parse(self.xml_file)
+                root = tree.getroot()
+            else:
+                root = ET.Element("annotations")
+                tree = ET.ElementTree(root)
 
-        # Only add click elements if self.clicks is not empty
-        if self.clicks:
-            for i, (lit_row, lit_col, shad_row, shad_col) in enumerate(self.clicks, start=1):
-                click_element = ET.SubElement(image_element, "click", id=str(i))
-                
-                # Set lit and shadow points as sub-elements with row and col attributes
-                lit_element = ET.SubElement(click_element, "lit")
-                lit_element.set("row", str(lit_row))
-                lit_element.set("col", str(lit_col))
-                
-                shad_element = ET.SubElement(click_element, "shadow")
-                shad_element.set("row", str(shad_row) if shad_row is not None else "")
-                shad_element.set("col", str(shad_col) if shad_col is not None else "")
+            # Add new image element
+            image_element = ET.Element("image")
+            image_element.set("name", image_name.lower())
+            image_element.set("target_directory", target_directory)
+            image_element.set("patch_size", self.img_processor.get_patch_size())
+            image_element.set("anchor_point", self.img_processor.get_anchor_point())
 
-        # Convert the XML tree to a string and write it to the XML file
-        tree = ET.ElementTree(root)
-        with open(self.xml_file, mode='a') as file:
-            tree.write(file, encoding="unicode", xml_declaration=True)
-        print(f"Data successfully written to {self.xml_file}")
+            if self.clicks:
+                for i, (lit_row, lit_col, shad_row, shad_col) in enumerate(self.clicks, start=1):
+                    click_element = ET.SubElement(image_element, "click", id=str(i))
+                    lit_element = ET.SubElement(click_element, "lit")
+                    lit_element.set("row", str(lit_row))
+                    lit_element.set("col", str(lit_col))
+                    shad_element = ET.SubElement(click_element, "shadow")
+                    if shad_row is not None:
+                        shad_element.set("row", str(shad_row))
+                    if shad_col is not None:
+                        shad_element.set("col", str(shad_col))
+
+            # Prettify the newly created image element
+            pretty_image_element = self.prettify_element(image_element)
+
+            # Append the prettified element to the root
+            root.append(ET.fromstring(pretty_image_element))
+
+            # Save the updated XML file
+            tree.write(self.xml_file, encoding="unicode", xml_declaration=True)
+            print(f"Data successfully written to {self.xml_file}")
+
+        except Exception as e:
+            print(f"Error while writing to XML: {e}")
 
     def move_image(self, image_path, destination_folder) -> None:
         """
@@ -237,7 +252,7 @@ class AnnotationManager:
             window_name = "Original Image ---------------------------------------------------------------- Processed Image"
             cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
             cv2.imshow(window_name, combined_image)
-            cv2.resizeWindow(window_name, 1000, 1000)
+            #cv2.resizeWindow(window_name, 1000, 1000)
             
             if clickable:
                 cv2.setMouseCallback(window_name, self.click_event)
@@ -433,17 +448,6 @@ class AnnotationManager:
                             print("Quitting.")
                             cv2.destroyAllWindows()
                             return
-
-                        else:
-                            print("""
-                                  Press: 
-                                  \n    'h' to save image HIGH quality annotations 
-                                  \n    'l' to save image LOW quality annotations
-                                  \n    'd' to save image duplicate image annotations 
-                                  \n    'r' to redo the annotations 
-                                  \n    't' to drop the image for quality reasons. 
-                                  \n    'q' to quit the annotator.
-                                  """)
 
                     cv2.destroyAllWindows()
 

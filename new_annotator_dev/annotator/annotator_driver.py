@@ -13,7 +13,7 @@ from image_processor_class import LogChromaticity
 from annotator_class import AnnotationManager
 
 # UPDATE THIS: This is name of the folder that contains the images to be processed
-image_folder = 'test'
+image_folder = 'new_annotator_dev/test_images'
 
 ############### NONE OF THIS NEEDS TO BE UPDATED!!!! #############################
 # These are destination directories and files
