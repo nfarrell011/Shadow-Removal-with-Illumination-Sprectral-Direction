@@ -1,0 +1,79 @@
+<?xml version="1.0" ?>
+<root>
+  <dataset>
+    <annotations>
+      <image name="adari_girish_008.tif" target_directory="test/processed/high_quality" patch_size="(1, 1)" anchor_point="[10.8 10.8 10.8]">
+        <click id="1">
+          <lit row="833" col="455"/>
+          <shadow row="854" col="428"/>
+        </click>
+      </image>
+      <image name="adari_girish_009.tif" target_directory="test/processed/high_quality" patch_size="(52, 52)" anchor_point="[10.6 10.6 10.6]">
+        <click id="1">
+          <lit row="1196" col="448"/>
+          <shadow row="1131" col="430"/>
+        </click>
+        <click id="2">
+          <lit row="1258" col="589"/>
+          <shadow row="1307" col="342"/>
+        </click>
+        <click id="3">
+          <lit row="1014" col="604"/>
+          <shadow row="1001" col="558"/>
+        </click>
+      </image>
+      <image name="adari_girish_004.tif" target_directory="test/processed/high_quality" patch_size="(37, 37)" anchor_point="[10.8 10.8 10.8]">
+        <click id="1">
+          <lit row="698" col="531"/>
+          <shadow row="712" col="516"/>
+        </click>
+      </image>
+      <image name="adari_girish_007.tif" target_directory="test/processed/high_quality" patch_size="(52, 52)" anchor_point="[10.8 10.8 10.8]">
+        <click id="1">
+          <lit row="654" col="890"/>
+          <shadow row="626" col="875"/>
+        </click>
+        <click id="2">
+          <lit row="76" col="977"/>
+          <shadow row="215" col="900"/>
+        </click>
+      </image>
+      <image name="adari_girish_002.tif" target_directory="test/processed/high_quality" patch_size="(40, 40)" anchor_point="[10.8 10.8 10.8]">
+        <click id="1">
+          <lit row="393" col="804"/>
+          <shadow row="397" col="753"/>
+        </click>
+      </image>
+      <image name="adari_girish_001.tif" target_directory="test/processed/high_quality" patch_size="(41, 41)" anchor_point="[10.8 10.8 10.8]">
+        <click id="1">
+          <lit row="803" col="649"/>
+          <shadow row="748" col="641"/>
+        </click>
+      </image>
+      <image name="adari_girish_000.tif" target_directory="test/processed/high_quality" patch_size="(50, 50)" anchor_point="[10.8 10.8 10.8]">
+        <click id="1">
+          <lit row="848" col="258"/>
+          <shadow row="764" col="286"/>
+        </click>
+        <click id="2">
+          <lit row="780" col="528"/>
+          <shadow row="705" col="458"/>
+        </click>
+      </image>
+      <image name="balasubramanian_aadhiaadhavan_023.tif" target_directory="test/processed/low_quality" patch_size="(1, 1)" anchor_point="[10.8 10.8 10.8]">
+        <click id="1">
+          <lit row="1163" col="539"/>
+          <shadow row="1096" col="493"/>
+        </click>
+        <click id="2">
+          <lit row="1030" col="663"/>
+          <shadow row="990" col="585"/>
+        </click>
+        <click id="3">
+          <lit row="920" col="818"/>
+          <shadow row="855" col="820"/>
+        </click>
+      </image>
+    </annotations>
+  </dataset>
+</root>
