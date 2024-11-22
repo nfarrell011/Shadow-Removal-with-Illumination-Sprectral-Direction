@@ -12,7 +12,7 @@ import numpy as np
 import cv2
 import os
 
-class ImageTesterLogChromaticity:
+class LogChromaticity:
     """
     """
     def __init__(self) -> None:
@@ -168,14 +168,14 @@ def main():
     """
     """
     # Update these to check an image
-    image_name = "acharya_mrudula_021_0_0.tif"
-    images_dir = "/Users/nelsonfarrell/Documents/Northeastern/7180/projects/spectral_ratio/training_data/training_images_cropped"
-    isd_map_for_image_png = "/Users/nelsonfarrell/Documents/Northeastern/7180/projects/spectral_ratio/training_data/training_isds_cropped/acharya_mrudula_021_isd_0_0.png"
+    image_name = "acharya_mrudula_021.tif"
+    images_dir = "/Users/nelsonfarrell/Documents/Northeastern/7180/projects/spectral_ratio/training_data/training_images"
+    isd_map_for_image_png = "/Users/nelsonfarrell/Documents/Northeastern/7180/projects/spectral_ratio/training_data/training_isds/acharya_mrudula_021_isd.png"
     anchor_point = [10.8, 10.8, 10.8] # THIS IS A DEFAULT VALUE! The real anchor point for an image is in the XML doc.
 
     # Processes image and displays results
-    processor = ImageTesterLogChromaticity()
-    processor.process_img(images_dir, image_name, isd_map_for_image_png, anchor_point)
+    processor = LogChromaticity()
+    processor.process_img(images_dir, image_name, isd_map_for_image_png,  anchor_point)
 
 if __name__ == "__main__":
     main()
