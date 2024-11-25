@@ -195,7 +195,6 @@ def main():
 
     top_left = images_dir + image_name
     top_left_image = cv2.imread(top_left, cv2.IMREAD_UNCHANGED)
-    print("Image Values", top_left_image)
 
     isd_map_for_image_png = cv2.imread(isd_map_for_image_png)
     isd_map_for_image_png = isd_map_for_image_png.astype(float) / 255.0

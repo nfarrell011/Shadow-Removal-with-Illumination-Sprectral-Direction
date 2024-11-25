@@ -55,9 +55,10 @@ class ImageTesterLogChromaticity:
         isd_map = isd_map.astype(np.float32) / 255.0
         self.isd_map = isd_map
         
-    def set_img_rbg_and_isd_map_from_variable(self, rgb_img, isd_map):
+    def set_img_rbg_and_isd_map_from_variable(self, rgb_img, channel_wise_mean, channel_wise_std, isd_map):
         """ 
         """
+        rgb_img = (rgb_img * channel_wise_std) + channel_wise_mean
         self.rgb_img = rgb_img
         self.isd_map = isd_map
 
@@ -155,12 +156,13 @@ class ImageTesterLogChromaticity:
         cv2.imshow("Orig", self.rgb_img)
         cv2.waitKey(0)
 
-    def process_img(self, images_dir, image_name, isd_map, anchor_point) -> np.array:
+    def process_img(self, images_dir, image_name, isd_map, anchor_point, channel_wise_mean:None, channel_wise_std:None) -> np.array:
         """ 
         """
         if self.use_variables:
-            self.set_img_rbg_and_isd_map_from_variable(image_name, isd_map)
+            self.set_img_rbg_and_isd_map_from_variable(image_name, channel_wise_mean, channel_wise_std, isd_map)
             self.convert_img_to_log_space()
+            self.set_isd_map(isd_map)
             self.set_anchor_point(anchor_point)
             self.project_to_plane_locally()
             self.log_to_linear()
@@ -184,35 +186,18 @@ class ImageTesterLogChromaticity:
 
 ############################################################################################################################################
 
-def main():
-    """
-    """
-    # Update these to check an image
-    image_name = "Adari_Girish_000_0_0.tif"
-    images_dir = "/Users/nelsonfarrell/Documents/Northeastern/7180/projects/spectral_ratio/training_data/training_images_cropped/"
-    isd_map_for_image_png = "/Users/nelsonfarrell/Documents/Northeastern/7180/projects/spectral_ratio/training_data/training_isds_cropped/Adari_Girish_000_isd_0_0.png"
-    anchor_point = [10.8, 10.8, 10.8] # THIS IS A DEFAULT VALUE! The real anchor point for an image is in the XML doc.
+# def main():
+#     """
+#     """
+#     # Update these to check an image
+#     image_name = "acharya_mrudula_021_0_0.tif"
+#     images_dir = "/Users/nelsonfarrell/Documents/Northeastern/7180/projects/spectral_ratio/training_data/training_images_cropped"
+#     isd_map_for_image_png = "/Users/nelsonfarrell/Documents/Northeastern/7180/projects/spectral_ratio/training_data/training_isds_cropped/acharya_mrudula_021_isd_0_0.png"
+#     anchor_point = [10.8, 10.8, 10.8] # THIS IS A DEFAULT VALUE! The real anchor point for an image is in the XML doc.
 
-    top_left = images_dir + image_name
-    top_left_image = cv2.imread(top_left, cv2.IMREAD_UNCHANGED)
-    print("Image Values", top_left_image)
-
-    isd_map_for_image_png = cv2.imread(isd_map_for_image_png)
-    isd_map_for_image_png = isd_map_for_image_png.astype(float) / 255.0
-    print(isd_map_for_image_png)
-    
-
-    import matplotlib.pyplot as plt
-
-    # Processes image and displays results
-    processor = ImageTesterLogChromaticity(use_variables = True)
-    img = processor.process_img(None, top_left_image, isd_map_for_image_png, anchor_point)
-    plt.imshow(img)
-    plt.show()
-
-    # Processes image and displays results
-    # processor = ImageTesterLogChromaticity()
-    # processor.process_img(images_dir, image_name, isd_map_for_image_png, anchor_point)
+#     # Processes image and displays results
+#     processor = ImageTesterLogChromaticity()
+#     processor.process_img(images_dir, image_name, isd_map_for_image_png, anchor_point)
 
 if __name__ == "__main__":
-    main()
+    pass

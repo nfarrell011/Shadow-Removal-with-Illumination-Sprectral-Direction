@@ -195,18 +195,16 @@ def main():
 
     top_left = images_dir + image_name
     top_left_image = cv2.imread(top_left, cv2.IMREAD_UNCHANGED)
-    print("Image Values", top_left_image)
 
     isd_map_for_image_png = cv2.imread(isd_map_for_image_png)
     isd_map_for_image_png = isd_map_for_image_png.astype(float) / 255.0
-    print(isd_map_for_image_png)
     
 
     import matplotlib.pyplot as plt
 
     # Processes image and displays results
     processor = ImageTesterLogChromaticity(use_variables = True)
-    img = processor.process_img(None, top_left_image, isd_map_for_image_png, anchor_point)
+    img = processor.process_img(top_left_image, isd_map_for_image_png, anchor_point)
     plt.imshow(img)
     plt.show()
 
