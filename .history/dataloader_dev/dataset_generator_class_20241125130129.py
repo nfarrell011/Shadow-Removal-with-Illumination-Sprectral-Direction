@@ -20,7 +20,7 @@ from sklearn.model_selection import train_test_split
 ####################################################################################################################
 class ImageDatasetGenerator(Dataset):
     def __init__(self, image_folder:str, guidance_folder:str, split:str = None, val_size:float = 0.2,
-                 random_seed:int = 42, transform_images:callable= None, transform_guidance:callable = None):
+                 random_seed:int = 42, transform_images:callable=None, transform_guidance:callable= None):
         """
         Generates a dataset of images and guidance ISDs, with optional train/val splitting 
         Uses SKLearn for splitting.
@@ -34,7 +34,6 @@ class ImageDatasetGenerator(Dataset):
             transform_images: (callable):   - Function/transform to apply to the images. Optional, default = None.
             transform_guidance: (callable): - Function/transform to apply to the ISD maps. Optional, default = None.
         """
-        # Set the transformation functions
         self.transform_images = transform_images
         self.transform_guidance = transform_guidance
 
