@@ -11,48 +11,164 @@ def read_in_xml_data_as_dict(xml_file_path):
     """
     Reads in an XML doc as a dict
     """
+
+    #reformat_xml_file(xml_file_path, xml_file_path)
     # Read the XML file
     with open(xml_file_path, "r") as file:
         xml_content = file.read()
 
     # Parse the XML content
     data = xmltodict.parse(xml_content)
+
     return data
+
+
+import xml.etree.ElementTree as ET
+
+def reformat_xml_file(input_file, output_file):
+    """
+    Reformat the XML content from an input file, consolidate redundant tags,
+    fix structure, and save the reformatted XML to an output file.
+
+    Parameters:
+        input_file (str): Path to the input XML file.
+        output_file (str): Path to the output XML file to save the reformatted content.
+    """
+    def indent(elem, level=0):
+        """
+        Helper function to add indentation to XML elements.
+        """
+        i = "\n" + "    " * level
+        if len(elem):
+            if not elem.text or not elem.text.strip():
+                elem.text = i + "    "
+            for child in elem:
+                indent(child, level + 1)
+            if not child.tail or not child.tail.strip():
+                child.tail = i
+        if level and (not elem.tail or not elem.tail.strip()):
+            elem.tail = i
+        elif not level and (not elem.tail or not elem.tail.strip()):
+            elem.tail = "\n"
+
+    # Parse the input XML file
+    with open(input_file, "r", encoding="utf-8") as file:
+        raw_xml = file.read()
+
+    # Create a single root element for consolidated content
+    root = ET.Element("annotations")
+
+    # Remove redundant XML declarations and consolidate content
+    raw_data = raw_xml.split('<?xml version=')[1:]  # Skip redundant declarations
+    for data in raw_data:
+        data = '<?xml version=' + data.strip()
+        sub_root = ET.fromstring(data)
+        for image in sub_root.findall("image"):
+            root.append(image)
+
+    # Indent the XML for readability
+    indent(root)
+
+    # Write the reformatted XML to the output file
+    tree = ET.ElementTree(root)
+    tree.write(output_file, encoding="utf-8", xml_declaration=True)
+    print(f"Reformatted XML saved to {output_file}")
+
 
 def extract_image_data(data, image_name):
     """
-    Extracts the image data for one image from the XML data dict 
+    Extracts the image data for one image from the XML data dict.
+
+    Args:
+        data (dict): The parsed XML data in dictionary format.
+        image_name (str): The name of the image to extract data for.
+
+    Returns:
+        tuple: (lit_coords, shadow_coords, patch_size, anchor_point)
     """
     try:
-        annotations = data['root']['dataset']['annotations']
+        # Access annotations from the XML structure
+        annotations = data.get('annotations', {}).get('image', [])
         lit_coords = []
         shadow_coords = []
         patch_size = None
         anchor_point = None
-        
-        # Get the image annotations
-        for annotation in annotations:
-            image = annotation['image']
+
+        # Ensure annotations is a list
+        if isinstance(annotations, dict):
+            annotations = [annotations]
+
+        # Iterate through the images in annotations
+        for image in annotations:
             if image['@name'] == image_name:
                 patch_size = image['@patch_size']
                 anchor_point = image['@anchor_point']
-                clicks = image['click']
-                
+                clicks = image.get('click', [])
+
                 # Handle single click or list of clicks
                 if isinstance(clicks, dict):
                     clicks = [clicks]
-                
+
                 for click in clicks:
-                    lit_coords.append((int(click['lit']['@row']), int(click['lit']['@col'])))
-                    shadow_coords.append((int(click['shadow']['@row']), int(click['shadow']['@col'])))
-        
-        # Update the dtype of patch_size and anchor_point; currently they are strings
-        patch_size = tuple(map(int, patch_size.strip("()").split(", ")))
-        anchor_point = list(map(float, anchor_point.strip("[]").split()))
-    except Exception:
-        print(f"{image_name} NOT FOUND IN XML")
+                    lit_coords.append(
+                        (int(click['lit']['@row']), int(click['lit']['@col']))
+                    )
+                    shadow_coords.append(
+                        (int(click['shadow']['@row']), int(click['shadow']['@col']))
+                    )
+
+                # Break once the required image is found
+                break
+
+        # Convert patch_size and anchor_point to appropriate data types
+        if patch_size:
+            patch_size = tuple(map(int, patch_size.strip("()").split(", ")))
+        if anchor_point:
+            anchor_point = list(map(float, anchor_point.strip("[]").split()))
+
+        if not lit_coords:
+            print(f"No clicks found for image: {image_name}")
+
+    except KeyError as e:
+        print(f"Missing key while extracting data for {image_name}: {e}")
+    except Exception as e:
+        print(f"Error extracting data for {image_name}: {e}")
 
     return lit_coords, shadow_coords, patch_size, anchor_point
+# def extract_image_data(data, image_name):
+#     """
+#     Extracts the image data for one image from the XML data dict 
+#     """
+#     try:
+#         annotations = data['root']['dataset']['annotations']
+#         lit_coords = []
+#         shadow_coords = []
+#         patch_size = None
+#         anchor_point = None
+        
+#         # Get the image annotations
+#         for annotation in annotations:
+#             image = annotation['image']
+#             if image['@name'] == image_name:
+#                 patch_size = image['@patch_size']
+#                 anchor_point = image['@anchor_point']
+#                 clicks = image['click']
+                
+#                 # Handle single click or list of clicks
+#                 if isinstance(clicks, dict):
+#                     clicks = [clicks]
+                
+#                 for click in clicks:
+#                     lit_coords.append((int(click['lit']['@row']), int(click['lit']['@col'])))
+#                     shadow_coords.append((int(click['shadow']['@row']), int(click['shadow']['@col'])))
+        
+#         # Update the dtype of patch_size and anchor_point; currently they are strings
+#         patch_size = tuple(map(int, patch_size.strip("()").split(", ")))
+#         anchor_point = list(map(float, anchor_point.strip("[]").split()))
+#     except Exception:
+#         print(f"{image_name} NOT FOUND IN XML")
+
+#     return lit_coords, shadow_coords, patch_size, anchor_point
 
 class LogChromaticity:
     """
@@ -476,16 +592,16 @@ def main():
     UPDATE THE VARIABLES!!!
     """
     # Set the path to XML file; this contains all the processed image data for all the images
-    xml_file_path = "/Users/nelsonfarrell/Documents/Northeastern/7180/projects/spectral_ratio/annotations_folder_1_and_3.xml"
+    xml_file_path = "/Users/mikey/Library/Mobile Documents/com~apple~CloudDocs/Code/roux_class_files/CS7180/Projects/project2/Shadow-Removal-with-Illumination-Sprectral-Direction/data/folder_2/processed/annotations_copy.xml"
 
     # Set the path to where you want to store the isd maps; this also does not need to be changed for each image folder; high, low, dup.
     # But it does need to changed for outer image folder; i.e., folder_1, folder_3, ... 
-    isd_map_destination_dir = "/Users/nelsonfarrell/Documents/Northeastern/7180/projects/spectral_ratio/data/folder_1/processed_folder_1/isd_maps"
+    isd_map_destination_dir = "/Users/mikey/Library/Mobile Documents/com~apple~CloudDocs/Code/roux_class_files/CS7180/Projects/project2/Shadow-Removal-with-Illumination-Sprectral-Direction/data/folder_2/processed/isd_maps"
 
     # Images dir are the processed image folders, high quality, low quality, duplicates. 
     # All need to processed separately.
     # The other variables can remain the same and it the results will follow our current setup.
-    images_dir = "/Users/nelsonfarrell/Documents/Northeastern/7180/projects/spectral_ratio/data/folder_1/processed_folder_1/duplicates"
+    images_dir = "/Users/mikey/Library/Mobile Documents/com~apple~CloudDocs/Code/roux_class_files/CS7180/Projects/project2/Shadow-Removal-with-Illumination-Sprectral-Direction/data/folder_2/processed/high_quality"
 
     # Get the XML data
     xml_data_dict = read_in_xml_data_as_dict(xml_file_path)
