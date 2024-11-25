@@ -18,7 +18,7 @@ from tqdm import tqdm
 from pathlib import Path
 from torch import nn
 from torch.utils.data import Dataset, DataLoader
-from dataloader_dev import ImageDatasetGenerator
+from dataloader_dev.dataset_generator_class import ImageDatasetGenerator
 
 class TrainViT:
     """
@@ -44,6 +44,7 @@ class TrainViT:
         self.loss = loss
         self.run = run
         self.save_dir = save_dir
+        os.makedirs(save_dir, exist_ok=True)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         self.model = None
@@ -253,9 +254,9 @@ class TrainViT:
                 num_batches += 1
                 pbar.set_postfix(Val_loss=loss.item())
 
-        avg_val_loss = epoch_val_loss / num_batches
-        self.val_loss.append(avg_val_loss)
-        self.logger.info(f"Epoch {epoch} - Average Validation Loss: {avg_val_loss}")
+            avg_val_loss = epoch_val_loss / num_batches
+            self.val_loss.append(avg_val_loss)
+            self.logger.info(f"Epoch {epoch} - Average Validation Loss: {avg_val_loss}")
 
     def save_model_state(self, epoch: int) -> None:
         """

@@ -1,15 +1,14 @@
 # General training configuration
+model: "cnnViT"             # Select model
 checkpoint_path: null       # Path to checkpoint file if loading a previous state
 load_previous_state: false  # Whether to load a previous state
-data_dir: "path/to/data"    # Directory containing .tif images
-num_images: 1000            # Number of images to use for training
 size: 224                   # Image size
-batch_size: 32              # Batch size for training
-epochs: 101                 # Number of epochs for training
-train_image_dir: ""         # Directory containing training images
-isd_map_dir: ""             # Directory containing isd maps of training images.
+batch_size: 8              # Batch size for training
+epochs: 5                 # Number of epochs for training
+train_image_dir: "training_data/training_images_cropped"          # Directory containing training images
+isd_map_dir: "training_data/training_isds_cropped"                # Directory containing isd maps of training images.
 run: "test_run_01"          # Run name for logging and saving checkpoints
-save_dir: "/results/test_run_01"  # Explicitly set save directory
+save_dir: "results/test_run_01"  # Explicitly set save directory
 start_epoch: 0              # Starting epoch
 
 # Optimizer configuration
@@ -17,13 +16,14 @@ optimizer:
   type: "Adam"              # Type of optimizer (e.g., "Adam", "SGD", etc.)
   lr: 0.0002                # Learning rate
   weight_decay: 0.0001      # Weight decay (L2 regularization)
-  beta1: 0.5                # Beta1 parameter for Adam
-  beta2: 0.999              # Beta2 parameter for Adam
-  momentum: null            # Momentum (only used for optimizers like SGD)
+  betas: [0.5, 0.999]       # Betas parameter for Adam
+  # type: "SGD"              # Type of optimizer (e.g., "Adam", "SGD", etc.)
+  # lr: 0.0002                # Learning rate
+  # weight_decay: 0.0001      # Weight decay (L2 regularization)
+  # momentum: null            # Momentum (only used for optimizers like SGD)
 
 # Scheduler configuration (choose one)
 scheduler:
-  use_scheduler: true       # Whether to use a learning rate scheduler
   type: "StepLR"            # Type of scheduler ("StepLR", "ReduceLROnPlateau", etc.)
   params:                   # Scheduler-specific parameters
     step_size: 10           # For StepLR

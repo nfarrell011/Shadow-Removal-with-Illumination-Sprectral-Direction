@@ -25,7 +25,7 @@ def main():
 
     # Params for step # 1
     parent_data_folder = "data"
-    image_folder_list = ["folder_2"]
+    image_folder_list = ["folder_4"]
     image_quality_list = ["high_quality"]
 
     # Params for step # 2 and # 3

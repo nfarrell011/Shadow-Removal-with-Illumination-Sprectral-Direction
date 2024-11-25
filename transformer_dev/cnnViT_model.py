@@ -145,6 +145,8 @@ class CNNFeatureEmbedder(nn.Module):
         if cnn_backbone is None:
             cnn_backbone = resnet50(weights=ResNet50_Weights.IMAGENET1K_V1)
             self.feature_extractor = nn.Sequential(*list(cnn_backbone.children())[:-2])
+            for param in self.feature_extractor.parameters():
+                param.requires_grad = False
         else:
             self.feature_extractor = cnn_backbone
 

@@ -14,7 +14,8 @@ import torch
 from torch import nn
 import logging
 
-import VisionTransformer, TrainViT
+from trainer import TrainViT
+from cnnViT_model import VisionTransformer
 from vision_transformers.CvT_model import CvT
 
 
@@ -35,7 +36,7 @@ def load_optimizer_states(optimizer, config):
 
 # Load YAML configuration
 try:
-    with open("config.yaml", "r") as file:
+    with open("transformer_dev/config.yaml", "r") as file:
         params = yaml.safe_load(file)
 except FileNotFoundError:
     raise FileNotFoundError("The config.yaml file was not found. Please provide a valid path.")
@@ -43,15 +44,12 @@ except yaml.YAMLError as e:
     raise ValueError(f"Error parsing YAML file: {e}")
 
 # Validate required keys
-required_keys = ["data_dir", "num_images", "batch_size", "epochs", "lr", "beta1", "beta2", "run", "save_dir"]
+required_keys = ["batch_size", "epochs", "run", "save_dir", "train_image_dir", "isd_map_dir"]
 for key in required_keys:
     if key not in params:
         raise ValueError(f"Missing required configuration key: {key}")
 
 # Extract parameters
-data_dir = params["data_dir"]
-paths = glob.glob(os.path.join(data_dir, "*.tif"))
-num_images = params["num_images"]
 size = params["size"]
 batch_size = params["batch_size"]
 epochs = params["epochs"]
@@ -60,26 +58,29 @@ image_dir =  params["train_image_dir"]
 isd_map_dir = params["isd_map_dir"]
 save_dir = os.path.abspath(params["save_dir"])
 start_epoch = params.get("start_epoch", 0)
-loss = nn.CosineSimilarity()
+loss = nn.L1Loss()
 
 # optim params
 optimizer_config = params.get("optimizer", {})
+if 'betas' in optimizer_config:
+    optimizer_config['betas'] = tuple(optimizer_config['betas'])
 optimizer_type = optimizer_config.pop("type", "Adam")  # Default to "Adam" if not specified
 
 # schedule params
-use_scheduler = params.get("use_scheduler", False)
-if use_scheduler:
-    scheduler_config = params.get("scheduler", {})
-    scheduler_type = optimizer_config.pop("type")  # Default to "Adam" if not specified
+
+scheduler_config = params.get("scheduler", {})
+scheduler_type = scheduler_config.pop("type") 
 
 # Model setup
 # if else for model selection
-if params["model"] == 'ccnViT':
+if params["model"] == 'cnnViT':
     model = VisionTransformer(num_layers=12, img_size=size, embed_dim=768, patch_size=16, num_head=8, cnn_embedding=True)
     model_params = model.parameters()
-if params["model"] == 'CvT':
+elif params["model"] == 'CvT':
     model = CvT()
     model_params = model.parameters()
+else:
+     raise ValueError(f"Missing required configuration key: 'model'")
 
 # Initialize training class
 vit_trainer = TrainViT(size, batch_size, epochs, loss, run, save_dir, start_epoch)
@@ -88,8 +89,7 @@ vit_trainer = TrainViT(size, batch_size, epochs, loss, run, save_dir, start_epoc
 vit_trainer.set_data_loaders(image_dir=image_dir, isd_map_dir=isd_map_dir, perform_checks=True) # add arguments to yaml
 vit_trainer.set_model(model=model)
 vit_trainer.set_optimizer(model_params=model_params, optimizer_type=optimizer_type, **optimizer_config)
-if use_scheduler:
-    vit_trainer.set_scheduler(scheduler_type=scheduler_type, **scheduler_config)
+vit_trainer.set_scheduler(scheduler_type=scheduler_type, **scheduler_config)
 
 # Load checkpoint if required
 if params["pretrained"]["load_model_state"]:
