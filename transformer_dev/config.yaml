@@ -1,0 +1,55 @@
+# General training configuration
+checkpoint_path: null       # Path to checkpoint file if loading a previous state
+load_previous_state: false  # Whether to load a previous state
+data_dir: "path/to/data"    # Directory containing .tif images
+num_images: 1000            # Number of images to use for training
+size: 224                   # Image size
+batch_size: 32              # Batch size for training
+epochs: 101                 # Number of epochs for training
+lr: 0.0002                  # Learning rate
+beta1: 0.5                  # Beta1 for Adam optimizer
+beta2: 0.999                # Beta2 for Adam optimizer
+run: "test_run_01"          # Run name for logging and saving checkpoints
+save_dir: "/results/test_run_01"  # Explicitly set save directory
+start_epoch: 0              # Starting epoch
+
+# Optimizer configuration
+optimizer:
+  type: "Adam"              # Type of optimizer (e.g., "Adam", "SGD", etc.)
+  lr: 0.0002                # Learning rate
+  weight_decay: 0.0001      # Weight decay (L2 regularization)
+  beta1: 0.5                # Beta1 parameter for Adam
+  beta2: 0.999              # Beta2 parameter for Adam
+  momentum: null            # Momentum (only used for optimizers like SGD)
+
+# Scheduler configuration (choose one)
+scheduler:
+  use_scheduler: true       # Whether to use a learning rate scheduler
+  type: "StepLR"            # Type of scheduler ("StepLR", "ReduceLROnPlateau", etc.)
+  params:                   # Scheduler-specific parameters
+    step_size: 10           # For StepLR
+    gamma: 0.1              # For StepLR
+
+# Alternative scheduler configurations (comment out the above and uncomment one of these if needed)
+# scheduler:
+#   use_scheduler: true
+#   type: "ReduceLROnPlateau"
+#   params:
+#     mode: "min"
+#     factor: 0.1
+#     patience: 5
+#     threshold: 0.01
+#     cooldown: 2
+
+# scheduler:
+#   use_scheduler: true
+#   type: "CosineAnnealingLR"
+#   params:
+#     T_max: 50
+#     eta_min: 1e-6
+
+# Pretrained settings
+pretrained:
+  checkpoint_path: null     # Path to checkpoint file if loading a previous state
+  load_model_state: false   # Whether to load the model state
+  load_optim_states: false  # Whether to load optimizer states
