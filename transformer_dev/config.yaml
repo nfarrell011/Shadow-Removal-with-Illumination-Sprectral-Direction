@@ -6,9 +6,8 @@ num_images: 1000            # Number of images to use for training
 size: 224                   # Image size
 batch_size: 32              # Batch size for training
 epochs: 101                 # Number of epochs for training
-lr: 0.0002                  # Learning rate
-beta1: 0.5                  # Beta1 for Adam optimizer
-beta2: 0.999                # Beta2 for Adam optimizer
+train_image_dir: ""         # Directory containing training images
+isd_map_dir: ""             # Directory containing isd maps of training images.
 run: "test_run_01"          # Run name for logging and saving checkpoints
 save_dir: "/results/test_run_01"  # Explicitly set save directory
 start_epoch: 0              # Starting epoch

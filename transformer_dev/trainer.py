@@ -10,28 +10,25 @@ This file contains a training class (TrainViT).
 import os
 import logging
 import torch
-from torch import nn
-from torch.utils.data import DataLoader
-from pathlib import Path
-import matplotlib.pyplot as plt
-from tqdm import tqdm
 import yaml
+import matplotlib.pyplot as plt
+import torchvision.transforms as transforms
 
+from tqdm import tqdm
+from pathlib import Path
+from torch import nn
+from torch.utils.data import Dataset, DataLoader
 from dataloader_dev import ImageDatasetGenerator
 
 class TrainViT:
     """
-    Class to pretrain the generator network with a Vision Transformer backbone.
+    Class to train ViT.
     """
 
     def __init__(self,
                  image_size=224,
                  batch_size=32,
                  epochs=100,
-                 lr=0.0002,
-                 beta1=0.5,
-                 beta2=0.999,
-                 weight_decay=0,
                  loss=nn.CosineSimilarity(),
                  run="training_run",
                  save_dir='/results',
@@ -44,10 +41,6 @@ class TrainViT:
 
         self.image_size = image_size
         self.batch_size = batch_size
-        self.lr = lr
-        self.beta1 = beta1
-        self.beta2 = beta2
-        self.weight_decay = weight_decay
         self.loss = loss
         self.run = run
         self.save_dir = save_dir
@@ -72,14 +65,6 @@ class TrainViT:
         self.val_paths = None
         self.train_paths = None
 
-    def set_train_and_val_paths(self, data_dir: str, num_images: int) -> None:
-        """
-        Placeholder for setting training and validation paths.
-        """
-        self.train_paths = os.path.join(data_dir, "train")
-        self.val_paths = os.path.join(data_dir, "val")
-        self.logger.info(f"Train and val paths set: {self.train_paths}, {self.val_paths}")
-
     def set_model(self, model: callable = None) -> None:
         """
         Sets the generator model.
@@ -103,7 +88,7 @@ class TrainViT:
         except KeyError as e:
             self.logger.error(f"Checkpoint is missing a key: {e}")
 
- def set_data_loaders(self, image_dir: str, isd_map_dir: str, perform_checks: bool = True) -> None:
+    def set_data_loaders(self, image_dir: str, isd_map_dir: str, perform_checks: bool = True) -> None:
         """
         Sets up the dataloaders.
 
@@ -148,7 +133,7 @@ class TrainViT:
         if perform_checks:
             if not len(self.train_ds):
                 self.logger.warning("The dataloader is empty. No batches to inspect.")
-                return None, None
+                return
 
             for idx, (images, isds) in enumerate(self.train_ds):
                 self.logger.info(f"Inspecting Batch {idx + 1}")
@@ -163,29 +148,26 @@ class TrainViT:
 
         Args:
             model_params (iterable): Parameters of the model to optimize.
-            optimizer_type (str): Type of optimizer. Default is 'Adam'.
+            optimizer_type (str): Type of optimizer (e.g., 'Adam', 'SGD').
             **kwargs: Additional parameters for the optimizer.
+        
+        Raises:
+            ValueError: If the specified optimizer type is not supported.
         """
-        if optimizer_type == "Adam":
-            self.optimizer = torch.optim.Adam(
-                model_params, 
-                lr=self.lr, 
-                betas=(self.beta1, self.beta2), 
-                weight_decay=self.weight_decay,
-                **kwargs
-            )
-        elif optimizer_type == "SGD":
-            self.optimizer = torch.optim.SGD(
-                model_params, 
-                lr=self.lr, 
-                momentum=kwargs.get("momentum", 0.9), 
-                weight_decay=self.weight_decay,
-                **kwargs
-            )
-        else:
+        # Supported optimizer types
+        optimizers = {
+            "Adam": torch.optim.Adam,
+            "SGD": torch.optim.SGD,
+        }
+
+        # Get the optimizer class
+        optimizer_class = optimizers.get(optimizer_type)
+        if optimizer_class is None:
             raise ValueError(f"Unsupported optimizer type: {optimizer_type}")
 
-        logging.info(f"Optimizer set to {optimizer_type} with lr={self.lr}, weight_decay={self.weight_decay}")
+        # Initialize the optimizer with provided parameters and kwargs
+        self.optimizer = optimizer_class(model_params, **kwargs)
+        self.logger.info(f"Optimizer {optimizer_type} initialized with parameters: {kwargs}")
 
     def set_scheduler(self, scheduler_type="StepLR", **kwargs) -> None:
         """
@@ -231,8 +213,9 @@ class TrainViT:
 
         self.model.train()
         pbar = tqdm(self.train_dl, desc=f"Training Epoch {epoch}/{self.epochs}")
-        for i, data in enumerate(pbar):
-            imgs, isds = data["imgs"].to(self.device), data["isds"].to(self.device)
+        for i, (imgs, isds) in enumerate(pbar):
+            imgs.to(self.device)
+            isds.to(self.device)
 
             self.optimizer.zero_grad()
             model_output = self.model(imgs)
@@ -259,8 +242,9 @@ class TrainViT:
 
             self.model.eval()
             pbar = tqdm(self.val_dl, desc=f"Validation Epoch {epoch}/{self.epochs}")
-            for i, data in enumerate(pbar):
-                imgs, isds = data["imgs"].to(self.device), data["isds"].to(self.device)
+            for i, (imgs, isds) in enumerate(pbar):
+                imgs.to(self.device)
+                isds.to(self.device)
 
                 model_output = self.model(imgs)
                 loss = self.loss(model_output, isds)
@@ -326,21 +310,16 @@ class TrainViT:
         """
         for epoch in range(self.start_epoch, self.start_epoch + self.epochs):
             self.train_loop(epoch)
-            val_loss = self.val_loop(epoch)
-
-            # Scheduler step
-            if isinstance(self.scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
-                self.scheduler.step(val_loss)
-            else:
-                self.scheduler.step()
+            self.val_loop(epoch)
+            self.scheduler.step()
 
             if epoch % 10 == 0 or epoch == self.epochs - 1:
                 self.plot_losses(epoch)
                 self.save_model_state(epoch)
 
         return {
-        "model_state_dict": self.model.state_dict(),
-        "optimizer_state_dict": self.optimizer.state_dict(),
-        "train_loss_history": self.train_loss,
-        "val_loss_history": self.val_loss
-        }
+            "model_state_dict": self.model.state_dict(),
+            "optimizer_state_dict": self.optimizer.state_dict(),
+            "train_loss_history": self.train_loss,
+            "val_loss_history": self.val_loss
+            }

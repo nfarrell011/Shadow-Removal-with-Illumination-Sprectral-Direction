@@ -14,7 +14,8 @@ import torch
 from torch import nn
 import logging
 
-from transformer_dev import VisionTransformer, TrainViT
+import VisionTransformer, TrainViT
+from vision_transformers.CvT_model import CvT
 
 
 logging.basicConfig(level=logging.INFO)
@@ -54,24 +55,41 @@ num_images = params["num_images"]
 size = params["size"]
 batch_size = params["batch_size"]
 epochs = params["epochs"]
-lr = params["lr"]
-beta1 = params["beta1"]
-beta2 = params["beta2"]
 run = params["run"]
+image_dir =  params["train_image_dir"]
+isd_map_dir = params["isd_map_dir"]
 save_dir = os.path.abspath(params["save_dir"])
 start_epoch = params.get("start_epoch", 0)
-l1_loss = nn.CosineSimilarity()
+loss = nn.CosineSimilarity()
+
+# optim params
+optimizer_config = params.get("optimizer", {})
+optimizer_type = optimizer_config.pop("type", "Adam")  # Default to "Adam" if not specified
+
+# schedule params
+use_scheduler = params.get("use_scheduler", False)
+if use_scheduler:
+    scheduler_config = params.get("scheduler", {})
+    scheduler_type = optimizer_config.pop("type")  # Default to "Adam" if not specified
 
 # Model setup
-model = VisionTransformer(num_layers=12, img_size=size, embed_dim=768, patch_size=16, num_head=8, cnn_embedding=True)
-model_params = model.parameters()
+# if else for model selection
+if params["model"] == 'ccnViT':
+    model = VisionTransformer(num_layers=12, img_size=size, embed_dim=768, patch_size=16, num_head=8, cnn_embedding=True)
+    model_params = model.parameters()
+if params["model"] == 'CvT':
+    model = CvT()
+    model_params = model.parameters()
 
 # Initialize training class
-vit_trainer = TrainViT(size, batch_size, epochs, lr, beta1, beta2, l1_loss, run, start_epoch)
-vit_trainer.set_train_and_val_paths(paths, num_images)
-vit_trainer.set_data_loaders()
+vit_trainer = TrainViT(size, batch_size, epochs, loss, run, save_dir, start_epoch)
+
+# Sets
+vit_trainer.set_data_loaders(image_dir=image_dir, isd_map_dir=isd_map_dir, perform_checks=True) # add arguments to yaml
 vit_trainer.set_model(model=model)
-vit_trainer.set_optimizer(model_params=model_params)
+vit_trainer.set_optimizer(model_params=model_params, optimizer_type=optimizer_type, **optimizer_config)
+if use_scheduler:
+    vit_trainer.set_scheduler(scheduler_type=scheduler_type, **scheduler_config)
 
 # Load checkpoint if required
 if params["pretrained"]["load_model_state"]:
