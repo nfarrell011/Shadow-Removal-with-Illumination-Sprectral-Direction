@@ -103,20 +103,59 @@ class TrainViT:
         except KeyError as e:
             self.logger.error(f"Checkpoint is missing a key: {e}")
 
-    def set_data_loaders(self, perform_checks: bool = True) -> None:
+ def set_data_loaders(self, image_dir: str, isd_map_dir: str, perform_checks: bool = True) -> None:
         """
         Sets up the dataloaders.
+
+        Args:
+            image_dir (str): Directory of training images.
+            isd_map_dir (str): Directory of isd maps corresponding to training images. 
+            performs_check (bool): If True (default), will check that dataloader output.
+
+        Returns:
+            None
         """
-        self.train_ds = ImageDatasetGenerator(self.batch_size, paths=self.train_paths, split="train")
-        self.val_ds = ImageDatasetGenerator(self.batch_size, paths=self.val_paths, split="val")
-        self.train_dl = DataLoader(self.train_ds, batch_size=self.batch_size)
-        self.val_dl = DataLoader(self.val_ds, batch_size=self.batch_size)
+        # Transforms -- We can add augmentations here
+        transform_images = transforms.Compose([ 
+                                transforms.ToTensor()       
+                                #transforms.Normalize(mean = mean, std = std)
+                                            ])
+
+        transform_guidance = transforms.Compose([ 
+                                transforms.ToTensor()
+                                            ])
+        
+        # Create train split
+        self.train_ds = ImageDatasetGenerator(image_dir, 
+                                            isd_map_dir, 
+                                            split = "train", 
+                                            val_size = 0.2, 
+                                            random_seed = 42, 
+                                            transform_images = transform_images, 
+                                            transform_guidance = transform_guidance)
+        self.train_dl = DataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True, drop_last=True)
+
+        # Create val split
+        self.val_ds = ImageDatasetGenerator(image_dir, 
+                                            isd_map_dir, 
+                                            split = "val", 
+                                            val_size = 0.2, 
+                                            random_seed = 42, 
+                                            transform_images = transform_images, 
+                                            transform_guidance = transform_guidance)
+        self.val_dl = DataLoader(self.val_ds, batch_size=self.batch_size, shuffle=True, drop_last=True)
 
         if perform_checks:
-            data = next(iter(self.train_dl))
-            imgs, isds = data['imgs'], data['isds']
-            assert imgs.shape == isds.shape, "Mismatched shapes between inputs and targets!"
-            self.logger.info(f"Train data: {imgs.shape}, Validation data: {len(self.val_dl)} batches")
+            if not len(self.train_ds):
+                self.logger.warning("The dataloader is empty. No batches to inspect.")
+                return None, None
+
+            for idx, (images, isds) in enumerate(self.train_ds):
+                self.logger.info(f"Inspecting Batch {idx + 1}")
+                self.logger.info(f"Images shape: {images.shape}")
+                self.logger.info(f"ISDs shape: {isds.shape}")
+                if idx == 0:
+                    break
 
     def set_optimizer(self, model_params, optimizer_type="Adam", **kwargs) -> None:
         """
