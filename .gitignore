@@ -19,6 +19,9 @@ dist/
 build/
 *.egg
 
+# Ignore
+.history/
+
 # Data folder
 data/*
 /new_annotator_dev/test_images/*

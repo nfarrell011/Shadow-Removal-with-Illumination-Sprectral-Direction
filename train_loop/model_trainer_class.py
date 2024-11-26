@@ -6,7 +6,7 @@ Final Project: ISD Convolutional Transformer
 
 This file contains a training class (TrainViT).
 """
-
+# Packages
 import os
 import logging
 import torch
@@ -15,11 +15,20 @@ import matplotlib.pyplot as plt
 import torchvision.transforms as transforms
 
 from tqdm import tqdm
-from pathlib import Path
 from torch import nn
 from torch.utils.data import Dataset, DataLoader
-from dataloader_dev.dataset_generator_class import ImageDatasetGenerator
 
+import sys
+
+# Add the parent directory to the system path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
+sys.path.append(parent_dir)
+
+# Modules
+from dataloader.dataset_generator_class import ImageDatasetGenerator
+
+########################################## ViT Trainer #########################################################
 class TrainViT:
     """
     Class to train ViT.
@@ -209,25 +218,44 @@ class TrainViT:
         """
         Performs the training loop for a single epoch.
         """
+        # Reset the total loss and num batches
         epoch_train_loss = 0
         num_batches = 0
 
+        # Set model to train mode
         self.model.train()
+
+        # Sets up the progress bar 
         pbar = tqdm(self.train_dl, desc=f"Training Epoch {epoch}/{self.epochs}")
+
+        # Iterate over batches -- Each batch contains img and isd pair
         for i, (imgs, isds) in enumerate(pbar):
+
+            # Load images and isds
             imgs.to(self.device)
             isds.to(self.device)
 
+            # Zero the gradients for every batch
             self.optimizer.zero_grad()
+
+            # Make predicstions with model
             model_output = self.model(imgs)
+
+            # Compute loss with the outputs and true isds
             loss = self.loss(model_output, isds)
+
+            # Compute the gradients
             loss.backward()
+
+            # Update the learning weights
             self.optimizer.step()
 
+            # Gather results data
             epoch_train_loss += loss.item()
             num_batches += 1
             pbar.set_postfix(G_loss=loss.item())
 
+        # Track average loss
         avg_train_loss = epoch_train_loss / num_batches
         self.train_loss.append(avg_train_loss)
         self.logger.info(f"Epoch {epoch} - Average Training Loss: {avg_train_loss}")
@@ -257,6 +285,7 @@ class TrainViT:
             avg_val_loss = epoch_val_loss / num_batches
             self.val_loss.append(avg_val_loss)
             self.logger.info(f"Epoch {epoch} - Average Validation Loss: {avg_val_loss}")
+            return avg_val_loss
 
     def save_model_state(self, epoch: int) -> None:
         """
@@ -274,7 +303,7 @@ class TrainViT:
         }, save_path)
         self.logger.info(f"Model state saved at epoch {epoch}: {save_path}")
 
-    def save_config(self, config: dict, file_name="config.yaml") -> None:
+    def save_config(self, config: dict, file_name = "config.yaml") -> None:
         """
         Saves the configuration dictionary to a YAML file.
         """
@@ -309,13 +338,17 @@ class TrainViT:
         """
         Trains the model over multiple epochs and returns the final model, optimizer states, and loss history.
         """
+        best_val_loss = 1_000_000
         for epoch in range(self.start_epoch, self.start_epoch + self.epochs):
             self.train_loop(epoch)
-            self.val_loop(epoch)
+            avg_val_loss = self.val_loop(epoch)
             self.scheduler.step()
 
             if epoch % 10 == 0 or epoch == self.epochs - 1:
                 self.plot_losses(epoch)
+
+            if avg_val_loss < best_val_loss:
+                best_val_loss = avg_val_loss
                 self.save_model_state(epoch)
 
         return {

@@ -1,5 +1,5 @@
 # General training configuration
-model: "cnnViT"             # Select model
+model: "CvT"             # Select model
 checkpoint_path: null       # Path to checkpoint file if loading a previous state
 load_previous_state: false  # Whether to load a previous state
 size: 224                   # Image size

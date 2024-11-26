@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np 
 import cv2
 import os
+import xml.etree.ElementTree as ET
 
 def read_in_xml_data_as_dict(xml_file_path):
     """
@@ -21,9 +22,6 @@ def read_in_xml_data_as_dict(xml_file_path):
     data = xmltodict.parse(xml_content)
 
     return data
-
-
-import xml.etree.ElementTree as ET
 
 def reformat_xml_file(input_file, output_file):
     """

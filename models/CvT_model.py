@@ -52,13 +52,13 @@ class CVTEmbedding(nn.Module):
     """ 
 	Generates the embedding.
   	"""
-    print(f"Shape X IN: {x.shape}")
+    #print(f"Shape X IN: {x.shape}")
     x = self.embed(x)
     
 	# Rearrange to batch_size, positional_embeddings, channels
     x = rearrange(x, 'b c h w -> b (h w) c') # i.e. x: B T(h w) C
     x = self.norm(x)
-    print(f"Shape X OUT: {x.shape}")
+    #print(f"Shape X OUT: {x.shape}")
     return x
 
 ######################################################## MHA Class #############################################################
@@ -320,15 +320,15 @@ class Decoder(nn.Module):
         """
         # Stage 3 -> Stage 2
         x = self.decode_stage3(x)
-        print(f"After Stage 3 -> 2: {x.shape}")  
+        #print(f"After Stage 3 -> 2: {x.shape}")  
 
         # Stage 2 -> Stage 1
         x = self.decode_stage2(x)
-        print(f"After Stage 2 -> 1: {x.shape}")  
+        #print(f"After Stage 2 -> 1: {x.shape}")  
 
         # Stage 1 -> Original Image
         x = self.decode_stage1(x)
-        print(f"After Stage 1 -> Original: {x.shape}")  
+        #print(f"After Stage 1 -> Original: {x.shape}")  
 
         return x
 
@@ -379,15 +379,15 @@ class CvT(nn.Module):
     """
     # Stage 1
     x = self.stage1(x)
-    print(f"Stage 1: Shape x: {x.shape}")
+    #print(f"Stage 1: Shape x: {x.shape}")
 
     # Stage 2
     x = self.stage2(x)
-    print(f"Stage 2: Shape x: {x.shape}")
+    #print(f"Stage 2: Shape x: {x.shape}")
 
     # Stage 3
     x = self.stage3(x, ch_out = False)
-    print(f"Stage 3: Shape x: {x.shape}")
+    #print(f"Stage 3: Shape x: {x.shape}")
 
     # For classifiction; no decoder
     if self.cls_token:
