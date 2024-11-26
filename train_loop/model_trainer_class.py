@@ -26,7 +26,7 @@ parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
 sys.path.append(parent_dir)
 
 # Modules
-from dataloader.dataset_generator_class import ImageDatasetGenerator
+from utils.dataset_generator_class import ImageDatasetGenerator
 
 ########################################## ViT Trainer #########################################################
 class TrainViT:
@@ -38,7 +38,7 @@ class TrainViT:
                  image_size=224,
                  batch_size=32,
                  epochs=100,
-                 loss=nn.CosineSimilarity(),
+                 loss=nn.MSELoss(),
                  run="training_run",
                  save_dir='/results',
                  start_epoch=0):
@@ -71,6 +71,7 @@ class TrainViT:
 
         self.train_loss = []
         self.val_loss = []
+        self.best_val_loss = float('inf')
 
         self.val_paths = None
         self.train_paths = None
@@ -232,8 +233,8 @@ class TrainViT:
         for i, (imgs, isds) in enumerate(pbar):
 
             # Load images and isds
-            imgs.to(self.device)
-            isds.to(self.device)
+            imgs = imgs.to(self.device)
+            isds = isds.to(self.device)
 
             # Zero the gradients for every batch
             self.optimizer.zero_grad()
@@ -272,8 +273,8 @@ class TrainViT:
             self.model.eval()
             pbar = tqdm(self.val_dl, desc=f"Validation Epoch {epoch}/{self.epochs}")
             for i, (imgs, isds) in enumerate(pbar):
-                imgs.to(self.device)
-                isds.to(self.device)
+                imgs = imgs.to(self.device)
+                isds = isds.to(self.device)
 
                 model_output = self.model(imgs)
                 loss = self.loss(model_output, isds)
@@ -285,6 +286,8 @@ class TrainViT:
             avg_val_loss = epoch_val_loss / num_batches
             self.val_loss.append(avg_val_loss)
             self.logger.info(f"Epoch {epoch} - Average Validation Loss: {avg_val_loss}")
+     
+            
             return avg_val_loss
 
     def save_model_state(self, epoch: int) -> None:
@@ -294,12 +297,13 @@ class TrainViT:
         state_save_dir = os.path.join(self.save_dir, "model_states")
         os.makedirs(state_save_dir, exist_ok=True)
 
-        save_path = os.path.join(state_save_dir, f'checkpoint_epoch_{epoch}.pth')
+        save_path = os.path.join(state_save_dir, f'best_model.pth')
         torch.save({
             'epoch': epoch,
             'model_state_dict': self.model.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
-            'loss': self.train_loss[-1],
+            'train_loss': self.train_loss[-1],
+            'val_loss': self.val_loss[-1]
         }, save_path)
         self.logger.info(f"Model state saved at epoch {epoch}: {save_path}")
 
@@ -338,7 +342,6 @@ class TrainViT:
         """
         Trains the model over multiple epochs and returns the final model, optimizer states, and loss history.
         """
-        best_val_loss = 1_000_000
         for epoch in range(self.start_epoch, self.start_epoch + self.epochs):
             self.train_loop(epoch)
             avg_val_loss = self.val_loop(epoch)
@@ -347,13 +350,11 @@ class TrainViT:
             if epoch % 10 == 0 or epoch == self.epochs - 1:
                 self.plot_losses(epoch)
 
-            if avg_val_loss < best_val_loss:
-                best_val_loss = avg_val_loss
+            if avg_val_loss < self.best_val_loss:
+                self.best_val_loss = avg_val_loss
                 self.save_model_state(epoch)
 
         return {
-            "model_state_dict": self.model.state_dict(),
-            "optimizer_state_dict": self.optimizer.state_dict(),
             "train_loss_history": self.train_loss,
             "val_loss_history": self.val_loss
             }

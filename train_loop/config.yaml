@@ -1,14 +1,14 @@
 # General training configuration
-model: "CvT"             # Select model
+model: "cnnViT"             # Select model
 checkpoint_path: null       # Path to checkpoint file if loading a previous state
 load_previous_state: false  # Whether to load a previous state
 size: 224                   # Image size
-batch_size: 8              # Batch size for training
-epochs: 5                 # Number of epochs for training
-train_image_dir: "training_data/training_images_cropped"          # Directory containing training images
-isd_map_dir: "training_data/training_isds_cropped"                # Directory containing isd maps of training images.
+batch_size: 16              # Batch size for training
+epochs: 10                 # Number of epochs for training
+train_image_dir: "isd-ViT/training_data/training_images_cropped"          # Directory containing training images
+isd_map_dir: "isd-ViT/training_data/training_isds_cropped"                # Directory containing isd maps of training images.
 run: "test_run_01"          # Run name for logging and saving checkpoints
-save_dir: "results/test_run_01"  # Explicitly set save directory
+save_dir: "isd-ViT/results/test_run_01"  # Explicitly set save directory
 start_epoch: 0              # Starting epoch
 
 # Optimizer configuration

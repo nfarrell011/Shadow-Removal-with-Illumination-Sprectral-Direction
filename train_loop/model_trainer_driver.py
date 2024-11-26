@@ -8,6 +8,7 @@ This file can be used to train ViT.
 """
 # Packages
 import os
+import json
 import yaml
 import glob
 import torch
@@ -15,7 +16,7 @@ from torch import nn
 import logging
 
 # Modules
-from train_loop.model_trainer_class import TrainViT
+from utils.model_trainer_class import TrainViT
 from models.CvT_model import CvT
 from models.cnnViT_model import VisionTransformer
 
@@ -40,7 +41,7 @@ def load_optimizer_states(optimizer, config):
 
 # Load YAML configuration -- The YAML holds all the parameters.
 try:
-    with open("transformer_dev/config.yaml", "r") as file:
+    with open("isd-ViT/config.yaml", "r") as file:
         params = yaml.safe_load(file)
 except FileNotFoundError:
     raise FileNotFoundError("The config.yaml file was not found. Please provide a valid path.")
@@ -54,6 +55,7 @@ for key in required_keys:
         raise ValueError(f"Missing required configuration key: {key}")
 
 # Extract parameters from YAML dict.
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 size = params["size"]
 batch_size = params["batch_size"]
 epochs = params["epochs"]
@@ -77,7 +79,7 @@ scheduler_type = scheduler_config.pop("type")
 # Model setup
 # Sets which model will used in training - cnnVT or CvT
 if params["model"] == 'cnnViT':
-    model = VisionTransformer(num_layers = 12, img_size = size, embed_dim = 768, patch_size = 16, num_head = 8, cnn_embedding = True)
+    model = VisionTransformer(num_layers = 12, img_size = size, embed_dim = 768, patch_size = 16, num_head = 8, cnn_embedding = True).to(device)
     model_params = model.parameters()
 elif params["model"] == 'CvT':
     model = CvT(embed_dim = 64)
@@ -102,6 +104,19 @@ if params["pretrained"]["load_model_state"]:
 vit_trainer.save_config(config=params)
 logger.info(f"Starting Training")
 results_dict  = vit_trainer.train_model() # This is the training loop function
+
+
+# Define the save path
+results_dict_path = f"{save_dir}/{run}_results.json"
+
+# Save the dictionary to JSON
+try:
+    with open(results_dict_path, "w") as file:
+        json.dump(results_dict, file, indent=4)  # Use indent for better readability
+    logging.info(f"Results dict saved to: {results_dict_path}")
+except Exception as e:
+    logging.error(f"Failed to save results dict to {results_dict_path}: {e}")
+    
 
 # Log data for debugging
 logger.info(f"Final training loss: {results_dict['train_loss_history'][-1]}")

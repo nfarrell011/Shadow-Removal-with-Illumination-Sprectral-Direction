@@ -20,7 +20,7 @@ from torchvision.models import resnet50, ResNet50_Weights
 
 # Configure logging
 logging.basicConfig(
-    level=logging.DEBUG,  # Change to INFO or WARNING in production
+    level=logging.INFO,  # Change to INFO or WARNING in production
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(),  # Console logging
@@ -81,6 +81,9 @@ class PositionalEncoding(nn.Module):
         """
         seq_len = x.size(1)
         self.logger.debug(f"Adding positional encoding to tensor of shape {x.shape}")
+        
+        # Ensure positional encoding is on the same device as x
+        self.positional_encoding = self.positional_encoding.to(x.device)
         return x + self.positional_encoding[:, :seq_len, :]
     
 ##############################################################################################################
