@@ -184,12 +184,12 @@ class MultiHeadAttention(nn.Module):
 ######################################################## MLP Class #############################################################
 class MLP(nn.Module):
   """ 
-  Creats an MLP
+  Creates an MLP
   """
   def __init__(self, dim):
     super().__init__()
     self.ff = nn.Sequential(
-                            nn.Linear(dim, 4*dim),
+                            nn.Linear(dim, 4 * dim),
                             nn.GELU(),
                             nn.Dropout(0.1),
                             nn.Linear(4 * dim, dim),
@@ -339,9 +339,20 @@ class CvT(nn.Module):
 
   Executes a 3-stage vision transformer with a decoder to get back to image dims
   """
-  def __init__(self, embed_dim, cls_token:bool = False, num_class:int = 10):
+  def __init__(self, 
+               embed_dim,
+               mean_guidance:bool = False, 
+               intermediate_dim:int = None,
+               drop_out:float = 0.1, # For the linear layers when using mean ISD guidance 
+               cls_token:bool = False, 
+               num_class:int = 10):
     super().__init__()
+
+    # Set Attributes
     self.cls_token = cls_token
+    self.mean_guidance = mean_guidance
+    self.intermediate_dim = intermediate_dim
+    self.drop_out = drop_out
 
     self.stage1 = VisionTransformer(depth = 1,
                                      embed_dim = 64,
@@ -367,32 +378,51 @@ class CvT(nn.Module):
                                      cls_token = self.cls_token
                                      )
     
-	# For classifiction - Not used! 
+    # Feed-forward layer to output a 3-element Tensor
     self.ff = nn.Sequential(
+        nn.Linear(embed_dim * 13 * 13, self.intermediate_dim),  
+        nn.ReLU(),                                             
+        nn.Dropout(self.drop_out),                                      
+        nn.BatchNorm1d(self.intermediate_dim),                 
+        nn.Linear(self.intermediate_dim, embed_dim),           
+        nn.ReLU(),                                            
+        nn.Dropout(self.drop_out),                                       
+        nn.BatchNorm1d(embed_dim),                             
+        nn.Linear(embed_dim, 3)                               
+    )
+    
+    # For classifiction - Not used! 
+    self.ff_classifier = nn.Sequential(
         nn.Linear(6 * embed_dim, embed_dim),
         nn.ReLU(),
         nn.Linear(embed_dim, num_class)
     )
+
   def forward(self, x):
     """ 
     Forward Pass
     """
     # Stage 1
     x = self.stage1(x)
-    #print(f"Stage 1: Shape x: {x.shape}")
+    print(f"Stage 1: Shape x: {x.shape}")
 
     # Stage 2
     x = self.stage2(x)
-    #print(f"Stage 2: Shape x: {x.shape}")
+    print(f"Stage 2: Shape x: {x.shape}")
 
     # Stage 3
     x = self.stage3(x, ch_out = False)
-    #print(f"Stage 3: Shape x: {x.shape}")
+    print(f"Stage 3: Shape x: {x.shape}")
 
-    # For classifiction; no decoder
+    # For classification; no decoder
     if self.cls_token:
       x = x[:, 1, :]
-      x = self.ff(x)
+      x = self.ff_classifier(x)
+    
+    if self.mean_guidance:
+       x = x.view(x.size(0), -1) # x.size(0) dynamically gets the batch size
+       x = self.ff(x)
+       return x
     
     # Perform decoding
     else:

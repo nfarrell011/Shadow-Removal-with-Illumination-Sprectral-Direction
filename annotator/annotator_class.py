@@ -252,7 +252,7 @@ class AnnotationManager:
             window_name = "Original Image ---------------------------------------------------------------- Processed Image"
             cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
             cv2.imshow(window_name, combined_image)
-            #cv2.resizeWindow(window_name, 1000, 1000)
+            cv2.resizeWindow(window_name, 1000, 1000)
             
             if clickable:
                 cv2.setMouseCallback(window_name, self.click_event)

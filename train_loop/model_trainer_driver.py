@@ -16,7 +16,7 @@ from torch import nn
 import logging
 
 # Modules
-from utils.model_trainer_class import TrainViT
+from model_trainer_class import TrainViT
 from models.CvT_model import CvT
 from models.cnnViT_model import VisionTransformer
 
