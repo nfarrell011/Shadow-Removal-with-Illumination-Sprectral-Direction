@@ -1,10 +1,11 @@
 # General training configuration
 model: "cnnViT"             # Select model
 checkpoint_path: null       # Path to checkpoint file if loading a previous state
-load_previous_state: false  # Whether to load a previous state
+load_previous_state: 0  # Whether to load a previous state
 size: 224                   # Image size
 batch_size: 16              # Batch size for training
 epochs: 10                 # Number of epochs for training
+use_mean: 0             # For dataloader, is use_mean=True, gets mean isd for whole image, if False gets pixelwise isds. 
 train_image_dir: "isd-ViT/training_data/training_images_cropped"          # Directory containing training images
 isd_map_dir: "isd-ViT/training_data/training_isds_cropped"                # Directory containing isd maps of training images.
 run: "test_run_01"          # Run name for logging and saving checkpoints

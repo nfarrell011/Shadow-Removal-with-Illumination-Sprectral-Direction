@@ -65,6 +65,7 @@ isd_map_dir = params["isd_map_dir"]
 save_dir = os.path.abspath(params["save_dir"])
 start_epoch = params.get("start_epoch", 0)
 loss = nn.MSELoss()
+use_mean = params["use_mean"]
 
 # Get the parameters for the optimizer.
 optimizer_config = params.get("optimizer", {})
@@ -91,7 +92,7 @@ else:
 vit_trainer = TrainViT(size, batch_size, epochs, loss, run, save_dir, start_epoch)
 
 # Sets the params for ViT trainer
-vit_trainer.set_data_loaders(image_dir = image_dir, isd_map_dir = isd_map_dir, perform_checks = True) # add arguments to yaml
+vit_trainer.set_data_loaders(image_dir = image_dir, isd_map_dir = isd_map_dir, perform_checks = True, use_mean = use_mean) # add arguments to yaml
 vit_trainer.set_model(model=model)
 vit_trainer.set_optimizer(model_params = model_params, optimizer_type = optimizer_type, **optimizer_config)
 vit_trainer.set_scheduler(scheduler_type = scheduler_type, **scheduler_config)

@@ -99,7 +99,7 @@ class TrainViT:
         except KeyError as e:
             self.logger.error(f"Checkpoint is missing a key: {e}")
 
-    def set_data_loaders(self, image_dir: str, isd_map_dir: str, perform_checks: bool = True) -> None:
+    def set_data_loaders(self, image_dir: str, isd_map_dir: str, perform_checks: bool = True, use_mean: bool = False) -> None:
         """
         Sets up the dataloaders.
 
@@ -107,7 +107,7 @@ class TrainViT:
             image_dir (str): Directory of training images.
             isd_map_dir (str): Directory of isd maps corresponding to training images. 
             performs_check (bool): If True (default), will check that dataloader output.
-
+            use_mean (bool): Sets the output for guidance image to mean isd if True or pixel-wise if False. Optional, default = False
         Returns:
             None
         """
@@ -128,7 +128,8 @@ class TrainViT:
                                             val_size = 0.2, 
                                             random_seed = 42, 
                                             transform_images = transform_images, 
-                                            transform_guidance = transform_guidance)
+                                            transform_guidance = transform_guidance,
+                                            use_mean = use_mean)
         self.train_dl = DataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True, drop_last=True)
 
         # Create val split
@@ -138,7 +139,8 @@ class TrainViT:
                                             val_size = 0.2, 
                                             random_seed = 42, 
                                             transform_images = transform_images, 
-                                            transform_guidance = transform_guidance)
+                                            transform_guidance = transform_guidance,
+                                            use_mean = use_mean)
         self.val_dl = DataLoader(self.val_ds, batch_size=self.batch_size, shuffle=True, drop_last=True)
 
         if perform_checks:

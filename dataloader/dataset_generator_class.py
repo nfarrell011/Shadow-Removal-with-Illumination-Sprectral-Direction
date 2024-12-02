@@ -20,7 +20,7 @@ from sklearn.model_selection import train_test_split
 ####################################################################################################################
 class ImageDatasetGenerator(Dataset):
     def __init__(self, image_folder:str, guidance_folder:str, split:str = None, val_size:float = 0.2,
-                 random_seed:int = 42, transform_images:callable= None, transform_guidance:callable = None):
+                 random_seed:int = 42, transform_images:callable= None, transform_guidance:callable = None, use_mean: bool = False):
         """
         Generates a dataset of images and guidance ISDs, with optional train/val splitting 
         Uses SKLearn for splitting.
@@ -33,10 +33,14 @@ class ImageDatasetGenerator(Dataset):
             random_seed: (int)              - Random seed for reproducibility; used in SKlearn train-test split.
             transform_images: (callable):   - Function/transform to apply to the images. Optional, default = None.
             transform_guidance: (callable): - Function/transform to apply to the ISD maps. Optional, default = None.
+            use_mean: (bool)                - Sets the output for guidance image to mean isd if True or pixel-wise if False. Optional, default = False
         """
         # Set the transformation functions
         self.transform_images = transform_images
         self.transform_guidance = transform_guidance
+
+        # Set the ISD to mean or pixelwise
+        self.use_mean = use_mean
 
         # Set paths to images and ISDs using glob
         self.image_paths = sorted(glob.glob(os.path.join(image_folder, "*.tif")) + glob.glob(os.path.join(image_folder, "*.tiff")))
@@ -80,6 +84,9 @@ class ImageDatasetGenerator(Dataset):
         guidance_path = self.guidance_paths[idx]
         guidance_image = cv2.imread(guidance_path, cv2.IMREAD_UNCHANGED)
         guidance_image = guidance_image.astype(np.float32) / 255.0
+        if self.use_mean:
+            guidance_image = np.mean(guidance_image, axis=(0,1))
+
 
         # Perform transforms
         if self.transform_images:
