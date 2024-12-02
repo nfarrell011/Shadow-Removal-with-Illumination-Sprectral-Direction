@@ -1,27 +1,31 @@
 # General training configuration
-model: "cnnViT"             # Select model
-checkpoint_path: null       # Path to checkpoint file if loading a previous state
-load_previous_state: 0  # Whether to load a previous state
+model: "CNN"                # Select model: cnnViT, CNN, CvT
 size: 224                   # Image size
 batch_size: 16              # Batch size for training
-epochs: 10                 # Number of epochs for training
-use_mean: 0             # For dataloader, is use_mean=True, gets mean isd for whole image, if False gets pixelwise isds. 
+epochs: 50                  # Number of epochs for training
+
+# Data
+dataset: "new"
+use_mean: 0                 # For dataloader, is use_mean=True, gets mean isd for whole image, if False gets pixelwise isds. 
 train_image_dir: "isd-ViT/training_data/training_images_cropped"          # Directory containing training images
 isd_map_dir: "isd-ViT/training_data/training_isds_cropped"                # Directory containing isd maps of training images.
+
+
+# Results pathing
 run: "test_run_01"          # Run name for logging and saving checkpoints
 save_dir: "isd-ViT/results/test_run_01"  # Explicitly set save directory
 start_epoch: 0              # Starting epoch
 
 # Optimizer configuration
 optimizer:
-  type: "Adam"              # Type of optimizer (e.g., "Adam", "SGD", etc.)
-  lr: 0.0002                # Learning rate
-  weight_decay: 0.0001      # Weight decay (L2 regularization)
-  betas: [0.5, 0.999]       # Betas parameter for Adam
+  type: "Adam"               # Type of optimizer (e.g., "Adam", "SGD", etc.)
+  lr: 0.0002                 # Learning rate
+  weight_decay: 0.0001       # Weight decay (L2 regularization)
+  betas: [0.5, 0.999]        # Betas parameter for Adam
   # type: "SGD"              # Type of optimizer (e.g., "Adam", "SGD", etc.)
-  # lr: 0.0002                # Learning rate
-  # weight_decay: 0.0001      # Weight decay (L2 regularization)
-  # momentum: null            # Momentum (only used for optimizers like SGD)
+  # lr: 0.0002               # Learning rate
+  # weight_decay: 0.0001     # Weight decay (L2 regularization)
+  # momentum: null           # Momentum (only used for optimizers like SGD)
 
 # Scheduler configuration (choose one)
 scheduler:

@@ -99,7 +99,7 @@ class TrainViT:
         except KeyError as e:
             self.logger.error(f"Checkpoint is missing a key: {e}")
 
-    def set_data_loaders(self, image_dir: str, isd_map_dir: str, perform_checks: bool = True, use_mean: bool = False) -> None:
+    def set_data_loaders(self, train_ds: object, val_ds: object, perform_checks: bool = True, use_mean: bool = False) -> None:
         """
         Sets up the dataloaders.
 
@@ -111,36 +111,13 @@ class TrainViT:
         Returns:
             None
         """
-        # Transforms -- We can add augmentations here
-        transform_images = transforms.Compose([ 
-                                transforms.ToTensor()       
-                                #transforms.Normalize(mean = mean, std = std)
-                                            ])
 
-        transform_guidance = transforms.Compose([ 
-                                transforms.ToTensor()
-                                            ])
-        
         # Create train split
-        self.train_ds = ImageDatasetGenerator(image_dir, 
-                                            isd_map_dir, 
-                                            split = "train", 
-                                            val_size = 0.2, 
-                                            random_seed = 42, 
-                                            transform_images = transform_images, 
-                                            transform_guidance = transform_guidance,
-                                            use_mean = use_mean)
+        self.train_ds = train_ds
         self.train_dl = DataLoader(self.train_ds, batch_size=self.batch_size, shuffle=True, drop_last=True)
 
         # Create val split
-        self.val_ds = ImageDatasetGenerator(image_dir, 
-                                            isd_map_dir, 
-                                            split = "val", 
-                                            val_size = 0.2, 
-                                            random_seed = 42, 
-                                            transform_images = transform_images, 
-                                            transform_guidance = transform_guidance,
-                                            use_mean = use_mean)
+        self.val_ds = val_ds
         self.val_dl = DataLoader(self.val_ds, batch_size=self.batch_size, shuffle=True, drop_last=True)
 
         if perform_checks:

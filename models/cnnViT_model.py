@@ -136,7 +136,7 @@ class CNNFeatureEmbedder(nn.Module):
     CNN-based embedding module for hybrid architectures.
 
     Args:
-        pretrained (bool): Whether or not to use a pretrained ResNet50. Default is true. 
+        cnn_backbone (nn.Module): CNN model for feature extraction. Default: ResNet-50.
         embed_dim (int): Target embedding dimension for the Transformer.
         position_embedding (bool): Whether to add positional embeddings to the sequence.
     """
@@ -153,6 +153,10 @@ class CNNFeatureEmbedder(nn.Module):
         else:
             cnn_backbone = resnet50()
             self.feature_extractor = nn.Sequential(*list(cnn_backbone.children())[:-2])
+            
+            # Adding a global average pooling layer when pretrained=False
+            self.global_pool = nn.AdaptiveAvgPool2d((1, 1))  # Pool to [batch_size, channels, 1, 1]
+            self.flatten = nn.Flatten()  # Flatten to [batch_size, channels]
 
         self.patch_embed = nn.Linear(cnn_backbone.fc.in_features, embed_dim)
         self.position_embedding = position_embedding
@@ -172,21 +176,42 @@ class CNNFeatureEmbedder(nn.Module):
         features = self.feature_extractor(x)
         self.logger.debug(f"Features shape: {features.shape}")
         
-        batch_size, C, H, W = features.shape
-        self.logger.debug(f"Feature map dims: {H}x{W}")
-        num_patches = H * W
-        self.logger.debug(f"Number of patches: {num_patches}")
-        
-        features = features.permute(0, 2, 3, 1).reshape(batch_size, num_patches, C)
-        self.logger.debug(f"Flattened features shape: {features.shape}")
+        if not hasattr(self, 'global_pool'):  # Handling case when pretrained=True
+            batch_size, C, H, W = features.shape
+            self.logger.debug(f"Feature map dims: {H}x{W}")
+            num_patches = H * W
+            self.logger.debug(f"Number of patches: {num_patches}")
 
-        embeddings = self.patch_embed(features)
-        self.logger.debug(f"Embedding shape after projection: {embeddings.shape}")
-        
-        if self.position_embedding:
-            pos_embed = PositionalEncoding(self.embed_dim, max_len=num_patches)
-            embeddings = pos_embed(embeddings)
-        return embeddings
+            features = features.permute(0, 2, 3, 1).reshape(batch_size, num_patches, C)
+            self.logger.debug(f"Flattened features shape: {features.shape}")
+
+            embeddings = self.patch_embed(features)
+            self.logger.debug(f"Embedding shape after projection: {embeddings.shape}")
+
+            if self.position_embedding:
+                pos_embed = PositionalEncoding(self.embed_dim, max_len=num_patches)
+                embeddings = pos_embed(embeddings)
+            return embeddings
+    
+        else:
+            # Global Pooling and Projection for pretrained=False
+            pooled = self.global_pool(features)  # [batch_size, channels, 1, 1]
+            self.logger.debug(f"Global pooled shape: {pooled.shape}")
+
+            flattened = self.flatten(pooled)  # [batch_size, channels]
+            self.logger.debug(f"Flattened shape: {flattened.shape}")
+
+            reduced_output = self.patch_embed(flattened)  # [batch_size, 3]
+            self.logger.debug(f"Reduced output shape: {reduced_output.shape}")
+
+            # Expand the reduced_output to [batch_size, 3, 224, 224]
+            expanded_output = reduced_output.unsqueeze(-1).unsqueeze(-1)  # [batch_size, 3, 1, 1]
+            self.logger.debug(f"Expanded output shape before broadcasting: {expanded_output.shape}")
+
+            broadcasted_output = expanded_output.expand(-1, -1, 224, 224)  # [batch_size, 3, 224, 224]
+            self.logger.debug(f"Broadcasted output shape: {broadcasted_output.shape}")
+
+            return broadcasted_output
     
 
 ##############################################################################################################

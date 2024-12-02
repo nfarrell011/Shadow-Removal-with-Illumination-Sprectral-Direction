@@ -105,7 +105,7 @@ class MeanISDImageDatasetGenerator(Dataset):
     """
     Generates dataset using the original mean isd and the files on discovery.
     """
-    def __init__(self, image_folder_path, isd_csv_path):
+    def __init__(self, image_folder_path, isd_csv_path, transform_images, transform_guidance):
         """
         Params:
             * image_folder_path: (str) - The path to the images on discovery.
@@ -119,6 +119,10 @@ class MeanISDImageDatasetGenerator(Dataset):
         
         # Guidance values
         self.guidance_values = guidance_data[['log_sr_b_avg', 'log_sr_g_avg', 'log_sr_r_avg']].values
+        
+        # Set the transformation functions
+        self.transform_images = transform_images
+        self.transform_guidance = transform_guidance
 
         # Check that the number of images and ISD maps match
         assert len(self.image_paths) == len(self.guidance_values), "Assertion failed!! Num images and ISDs do not match."
