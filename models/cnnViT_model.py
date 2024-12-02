@@ -136,22 +136,23 @@ class CNNFeatureEmbedder(nn.Module):
     CNN-based embedding module for hybrid architectures.
 
     Args:
-        cnn_backbone (nn.Module): CNN model for feature extraction. Default: ResNet-50.
+        pretrained (bool): Whether or not to use a pretrained ResNet50. Default is true. 
         embed_dim (int): Target embedding dimension for the Transformer.
         position_embedding (bool): Whether to add positional embeddings to the sequence.
     """
-    def __init__(self, cnn_backbone=None, embed_dim=768, position_embedding=True):
+    def __init__(self, pretrained=True, embed_dim=768, position_embedding=True):
         super().__init__()
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.info(f"Initializing CNNFeatureEmbedder with embed_dim={embed_dim}, position_embedding={position_embedding}")
         
-        if cnn_backbone is None:
+        if pretrained:
             cnn_backbone = resnet50(weights=ResNet50_Weights.IMAGENET1K_V1)
             self.feature_extractor = nn.Sequential(*list(cnn_backbone.children())[:-2])
             for param in self.feature_extractor.parameters():
                 param.requires_grad = False
         else:
-            self.feature_extractor = cnn_backbone
+            cnn_backbone = resnet50()
+            self.feature_extractor = nn.Sequential(*list(cnn_backbone.children())[:-2])
 
         self.patch_embed = nn.Linear(cnn_backbone.fc.in_features, embed_dim)
         self.position_embedding = position_embedding
