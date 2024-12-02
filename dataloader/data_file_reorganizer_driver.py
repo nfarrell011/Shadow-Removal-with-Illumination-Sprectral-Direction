@@ -25,7 +25,7 @@ def main():
 
     # Params for step # 1
     parent_data_folder = "data"
-    image_folder_list = ["folder_2"]
+    image_folder_list = ["folder_1", "folder_3"]
     image_quality_list = ["high_quality"]
 
     # Params for step # 2 and # 3
@@ -53,7 +53,7 @@ def main():
     if compute_mean_and_std:
         mean, std = dfr.get_channel_wise_mean_and_std(training_images_folder_name)
 
-    # Step # 2
+    # Step # 3
     if get_min_max_image_dims:
         max_W, max_H, min_W, min_H = dfr.get_min_max_dims(training_images_folder_name)
 

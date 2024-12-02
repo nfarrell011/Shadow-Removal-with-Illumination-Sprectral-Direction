@@ -342,7 +342,7 @@ class CvT(nn.Module):
   def __init__(self, 
                embed_dim,
                mean_guidance:bool = False, 
-               intermediate_dim:int = None,
+               intermediate_dim:int = 512,
                drop_out:float = 0.1, # For the linear layers when using mean ISD guidance 
                cls_token:bool = False, 
                num_class:int = 10):
@@ -353,6 +353,7 @@ class CvT(nn.Module):
     self.mean_guidance = mean_guidance
     self.intermediate_dim = intermediate_dim
     self.drop_out = drop_out
+    self.decoder = Decoder()
 
     self.stage1 = VisionTransformer(depth = 1,
                                      embed_dim = 64,
@@ -426,8 +427,7 @@ class CvT(nn.Module):
     
     # Perform decoding
     else:
-      decoder = Decoder()
-      x = decoder(x)
+      x = self.decoder(x)
     return x 
   
 #############################################################################################################################

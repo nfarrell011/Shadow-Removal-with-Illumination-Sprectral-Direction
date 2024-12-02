@@ -4,7 +4,7 @@ CS7180 - Fall 2024
 Bruce Maxwell, PhD  
 Final Project: ISD Convolutional Transformer  
 
-This file contains a class generate a dataset used for training a model
+This file contains a class generate data set generators used for training a model
 """
 ####################################################################################################################
 # Packages
@@ -14,9 +14,10 @@ import os
 import numpy as np
 import glob
 from sklearn.model_selection import train_test_split
+import pandas as pd
 
 ####################################################################################################################
-# Class
+# Class For Using Our Data
 ####################################################################################################################
 class ImageDatasetGenerator(Dataset):
     def __init__(self, image_folder:str, guidance_folder:str, split:str = None, val_size:float = 0.2,
@@ -53,8 +54,9 @@ class ImageDatasetGenerator(Dataset):
         # Splits the the data using SKlearn
         if split in ["train", "val"]:
             train_img, val_img, train_guid, val_guid = train_test_split(
-                self.image_paths, self.guidance_paths, test_size=val_size, random_state=random_seed, shuffle = True
+                self.image_paths, self.guidance_paths, test_size=val_size, random_state = random_seed, shuffle = True
             )
+
             # Sets attribute to return correct set
             if split == "train":
                 self.image_paths, self.guidance_paths = train_img, train_guid
@@ -95,7 +97,66 @@ class ImageDatasetGenerator(Dataset):
 
         # Return the pair of images
         return image, guidance_image
+
+####################################################################################################################
+# Class For Original Data On Discovery
+####################################################################################################################
+class MeanISDImageDatasetGenerator(Dataset):
+    """
+    Generates dataset using the original mean isd and the files on discovery.
+    """
+    def __init__(self, image_folder_path, isd_csv_path):
+        """
+        Params:
+            * image_folder_path: (str) - The path to the images on discovery.
+            * isd_csv_path: (str) - The path the csv with the mean isd values for each image.
+        """
+        # Load the guidance CSV
+        guidance_data = pd.read_csv(isd_csv_path)
+        
+        # Set paths to images
+        self.image_paths = [os.path.join(image_folder_path, fname) for fname in guidance_data['filename']]
+        
+        # Guidance values
+        self.guidance_values = guidance_data[['log_sr_b_avg', 'log_sr_g_avg', 'log_sr_r_avg']].values
+
+        # Check that the number of images and ISD maps match
+        assert len(self.image_paths) == len(self.guidance_values), "Assertion failed!! Num images and ISDs do not match."
+        print("Assertion Passed!!! We have the same number of images and ISD maps.")
+        
+    def __len__(self):
+        """ 
+        Returns the number of image pairs. 
+        """
+        return len(self.image_paths)
+
+    def __getitem__(self, idx):
+        """ 
+        Get the primary image and its corresponding guidance image.
+        """
+        # Load primary image
+        img_path = self.image_paths[idx]
+        image = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)  
+        image = image.astype(np.float32) / 65535.0
+
+        # Load guidance image
+        guidance_path = self.guidance_paths[idx]
+        guidance_values = np.array(guidance_path)
+
+        # Perform transforms
+        if self.transform_images:
+            image = self.transform_images(image)
+            guidance_values = self.transform_guidance(guidance_values)
+
+        # Return the pair of images
+        return image, guidance_values
     
+####################################################################################################################
+# End Class
+####################################################################################################################
+if __name__ == "__main__":
+    pass
+
 ####################################################################################################################
 # End Class
 ####################################################################################################################

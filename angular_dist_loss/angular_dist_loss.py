@@ -26,7 +26,7 @@ class CosineDistanceMetric(nn.Module):
             * cosine_distance: (float) - The angular distance between to true and predicted values.
         """
         super(CosineDistanceMetric, self).__init__()
-        self.reduce = True
+        self.reduce = reduce
 
     def forward(self, actual_vectors:torch.Tensor, predicted_vectors:torch.Tensor) -> torch.Tensor:
         """

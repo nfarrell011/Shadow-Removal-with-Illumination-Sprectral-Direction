@@ -13,7 +13,7 @@ from image_processor_class import LogChromaticity
 from annotator_class import AnnotationManager
 
 # UPDATE THIS: This is name of the folder that contains the images to be processed
-image_folder = 'data/folder_3'
+image_folder = 'data/folder_1'
 
 ############### NONE OF THIS NEEDS TO BE UPDATED!!!! #############################
 # These are destination directories and files
@@ -26,8 +26,8 @@ image_drop_dir = f'{image_folder}/processed/bad_images'
 isd_maps_dir = f'{image_folder}/processed/isd_maps'
 
 # Files
-csv_file_path = f'{image_folder}/annotations_folder_3_b.csv'
-xml_file_path = f'{image_folder}/annotations_folder_3_b.xml'
+csv_file_path = f'{image_folder}/annotations_folder_1_b.csv'
+xml_file_path = f'{image_folder}/annotations_folder_1_b.xml'
 
 directories = {
     "image_folder": image_folder,
